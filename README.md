@@ -29,7 +29,7 @@ Add this to your Claude Desktop configuration file:
 {
   "mcpServers": {
     "youmap": {
-      "command": "@youmap/youmap-mcp",
+      "command": "youmap-mcp",
       "env": {
         "YOUMAP_CLIENT_ID": "your_client_id_here",
         "YOUMAP_CLIENT_SECRET": "your_client_secret_here",
