@@ -1981,4 +1981,340 @@ export const TOOLS: MCPTool[] = [
       }
     },
   },
+  {
+    name: "delete_action",
+    description:
+      "Delete an existing action (post template) permanently. This action cannot be undone. The action must be owned by the authenticated user and must be removable (not in use by posts).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        actionId: {
+          type: "number",
+          description: "ID of the action to delete",
+        },
+      },
+      required: ["actionId"],
+    },
+    handler: async (args: any, client: YouMapClient) => {
+      try {
+        const result = await client.delete(
+          `/api/v1/post-template/${args.actionId}`
+        );
+
+        if (result.success) {
+          return {
+            success: true,
+            message: `Successfully deleted action with ID: ${args.actionId}`,
+            actionId: args.actionId,
+            deletedAt: new Date().toISOString(),
+          };
+        } else {
+          throw new Error("Failed to delete action - operation returned false");
+        }
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+          throw new Error(
+            "Authentication failed. Please check your credentials."
+          );
+        } else if (error.response?.status === 403) {
+          throw new Error(
+            "Access denied. You don't have permission to delete this action, or the action is not removable because it's being used by posts."
+          );
+        } else if (error.response?.status === 404) {
+          throw new Error(
+            "Action not found. Please check the actionId and ensure the action exists."
+          );
+        } else if (error.response?.status === 400) {
+          const errorDetails =
+            error.response.data?.message || "Invalid request data";
+          throw new Error(`Validation error: ${errorDetails}`);
+        } else {
+          throw new Error(`Failed to delete action: ${error.message}`);
+        }
+      }
+    },
+  },
+  {
+    name: "delete_map",
+    description:
+      "Delete an existing map permanently. This action cannot be undone. The map must be owned by the authenticated user. All posts, actions, and associated data on the map will be removed.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        mapId: {
+          type: "number",
+          description: "ID of the map to delete",
+        },
+      },
+      required: ["mapId"],
+    },
+    handler: async (args: any, client: YouMapClient) => {
+      try {
+        const result = await client.delete(`/api/v1/map/${args.mapId}`);
+
+        if (result.success) {
+          return {
+            success: true,
+            message: `Successfully deleted map with ID: ${args.mapId}`,
+            mapId: args.mapId,
+            deletedAt: new Date().toISOString(),
+          };
+        } else {
+          throw new Error("Failed to delete map - operation returned false");
+        }
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+          throw new Error(
+            "Authentication failed. Please check your credentials."
+          );
+        } else if (error.response?.status === 403) {
+          throw new Error(
+            "Access denied. You don't have permission to delete this map, or you are not the owner of this map."
+          );
+        } else if (error.response?.status === 404) {
+          throw new Error(
+            "Map not found. Please check the mapId and ensure the map exists."
+          );
+        } else if (error.response?.status === 400) {
+          const errorDetails =
+            error.response.data?.message || "Invalid request data";
+          throw new Error(`Validation error: ${errorDetails}`);
+        } else {
+          throw new Error(`Failed to delete map: ${error.message}`);
+        }
+      }
+    },
+  },
+  {
+    name: "delete_post",
+    description:
+      "Delete an existing post permanently. This action cannot be undone. The post must be owned by the authenticated user or you must have delete permissions on the map.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        postId: {
+          type: "number",
+          description: "ID of the post to delete",
+        },
+      },
+      required: ["postId"],
+    },
+    handler: async (args: any, client: YouMapClient) => {
+      try {
+        // Validate input
+        if (!args.postId || typeof args.postId !== "number") {
+          return {
+            success: false,
+            error: "Post ID is required and must be a number",
+          };
+        }
+
+        // Make API request to delete the post
+        const response = await client.delete(`/posts/${args.postId}`);
+
+        if (response.success) {
+          return {
+            success: true,
+            message: `Post with ID ${args.postId} has been deleted successfully`,
+            postId: args.postId,
+          };
+        } else {
+          return {
+            success: false,
+            error: response.error || "Failed to delete post",
+          };
+        }
+      } catch (error: any) {
+        // Handle specific HTTP error responses
+        if (error.response) {
+          const status = error.response.status;
+          const message = error.response.data?.message || error.message;
+
+          switch (status) {
+            case 401:
+              return {
+                success: false,
+                error:
+                  "Authentication required. Please check your access token.",
+              };
+            case 403:
+              return {
+                success: false,
+                error:
+                  "Access denied. You don't have permission to delete this post.",
+              };
+            case 404:
+              return {
+                success: false,
+                error: `Post with ID ${args.postId} not found.`,
+              };
+            case 400:
+              return {
+                success: false,
+                error: `Bad request: ${message}`,
+              };
+            default:
+              return {
+                success: false,
+                error: `Server error (${status}): ${message}`,
+              };
+          }
+        }
+
+        return {
+          success: false,
+          error: `Network error: ${error.message}`,
+        };
+      }
+    },
+  },
+  {
+    name: "update_map",
+    description:
+      "Update an existing map's properties such as name, description, access level, categories, and other settings. The map must be owned by the authenticated user.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        mapId: {
+          type: "number",
+          description: "ID of the map to update",
+        },
+        name: {
+          type: "string",
+          description: "New name of the map (3-50 characters)",
+          minLength: 3,
+          maxLength: 50,
+        },
+        description: {
+          type: "string",
+          description: "New description of the map (5-500 characters)",
+          minLength: 5,
+          maxLength: 500,
+        },
+        accessLevel: {
+          type: "string",
+          enum: ["public", "inviteOnly", "private"],
+          description:
+            "Access level: public (everyone can access), inviteOnly (invite specific users), private (only you)",
+        },
+        coverImageFromUrl: {
+          type: "string",
+          description:
+            "New cover image URL (e.g., http://example.com/image.jpg). To get the image URL, use generate_image or search_image actions.",
+        },
+        invitedUserIds: {
+          type: "array",
+          items: { type: "number" },
+          description:
+            "List of user IDs to invite (only used when accessLevel is inviteOnly)",
+        },
+        categoryIds: {
+          type: "array",
+          items: { type: "number" },
+          description: "Category IDs for the map (1-3 categories)",
+          minItems: 1,
+          maxItems: 3,
+        },
+        readonly: {
+          type: "boolean",
+          description:
+            "Set to true if you don't want other users to post on this map",
+        },
+        boundingBox: {
+          type: "object",
+          description: "Coordinates for the map view",
+          properties: {
+            north: { type: "number", description: "North latitude" },
+            south: { type: "number", description: "South latitude" },
+            east: { type: "number", description: "East longitude" },
+            west: { type: "number", description: "West longitude" },
+          },
+        },
+      },
+      required: ["mapId"],
+    },
+    handler: async (args: any, client: YouMapClient) => {
+      try {
+        // Validate input
+        if (!args.mapId || typeof args.mapId !== "number") {
+          return {
+            success: false,
+            error: "Map ID is required and must be a number",
+          };
+        }
+
+        // Extract mapId and prepare update payload
+        const { mapId, ...updateData } = args;
+
+        // Remove any undefined values to avoid sending empty fields
+        const cleanUpdateData = Object.entries(updateData)
+          .filter(([_, value]) => value !== undefined)
+          .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+
+        if (Object.keys(cleanUpdateData).length === 0) {
+          return {
+            success: false,
+            error: "At least one field must be provided for update",
+          };
+        }
+
+        // Make API request to update the map
+        const response = await client.post(`/maps/${mapId}`, cleanUpdateData);
+
+        if (response.success) {
+          return {
+            success: true,
+            message: `Map with ID ${mapId} has been updated successfully`,
+            map: response.data,
+          };
+        } else {
+          return {
+            success: false,
+            error: response.error || "Failed to update map",
+          };
+        }
+      } catch (error: any) {
+        // Handle specific HTTP error responses
+        if (error.response) {
+          const status = error.response.status;
+          const message = error.response.data?.message || error.message;
+
+          switch (status) {
+            case 401:
+              return {
+                success: false,
+                error:
+                  "Authentication required. Please check your access token.",
+              };
+            case 403:
+              return {
+                success: false,
+                error:
+                  "Access denied. You don't have permission to update this map.",
+              };
+            case 404:
+              return {
+                success: false,
+                error: `Map with ID ${args.mapId} not found.`,
+              };
+            case 400:
+              return {
+                success: false,
+                error: `Bad request: ${message}`,
+              };
+            default:
+              return {
+                success: false,
+                error: `Server error (${status}): ${message}`,
+              };
+          }
+        }
+
+        return {
+          success: false,
+          error: `Network error: ${error.message}`,
+        };
+      }
+    },
+  },
 ];
