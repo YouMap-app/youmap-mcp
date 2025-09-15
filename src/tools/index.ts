@@ -10,6 +10,16 @@ export interface MCPTool {
 
 export const TOOLS: MCPTool[] = [
   {
+    name: "test",
+    description: "test",
+    inputSchema: {
+      type: "string",
+    },
+    handler: async (args: any, client: YouMapClient) => {
+      console.log("test");
+    },
+  },
+  {
     name: "create_map",
     description:
       "Create a new map for a user. Maps are spaces where users can add posts, places, and organize content geographically.",
@@ -272,8 +282,7 @@ export const TOOLS: MCPTool[] = [
                 type: "object",
                 properties: {
                   fieldTypeId: { type: "number" },
-                  value: { type: "string" },
-                  linkType: { type: "string" },
+                  text: { type: "string" },
                 },
               },
             },
@@ -323,7 +332,65 @@ export const TOOLS: MCPTool[] = [
                 type: "object",
                 properties: {
                   fieldTypeId: { type: "number" },
-                  value: { type: "string", format: "date-time" },
+                  startDate: {
+                    type: "string",
+                    format: "timestamp",
+                    description:
+                      'Example: "1756771200". Only the date will be taken from this timestamp.',
+                  },
+                  endDate: {
+                    type: "string",
+                    format: "timestamp",
+                    description:
+                      'Example: "1756771200". Only the date will be taken from this timestamp',
+                  },
+                  startTime: {
+                    type: "string",
+                    format: "timestamp",
+                    description:
+                      'Example: "1756771200". Only the time will be taken from this timestamp.',
+                  },
+                  endTime: {
+                    type: "string",
+                    format: "timestamp",
+                    description:
+                      'Example: "1756771200". Only the time will be taken from this timestamp',
+                  },
+                },
+              },
+            },
+            selectFields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  fieldTypeId: { type: "number" },
+                  options: {
+                    type: "array",
+                    items: {
+                      type: "number",
+                    },
+                  },
+                },
+              },
+            },
+            valueSliderFields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  fieldTypeId: { type: "number" },
+                  value: { type: "number" },
+                },
+              },
+            },
+            optionSliderFields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  fieldTypeId: { type: "number" },
+                  index: { type: "number" },
                 },
               },
             },
@@ -696,6 +763,68 @@ export const TOOLS: MCPTool[] = [
                 required: ["label", "order"],
               },
             },
+            valueSliderFields: {
+              type: "array",
+              description:
+                "Value slider where people can choose a value from with a set range (min to max)",
+              items: {
+                properties: {
+                  label: { type: "string", description: "Field label" },
+                  order: { type: "number", description: "Field order" },
+                  featured: {
+                    type: "boolean",
+                    description: "Show in featured view",
+                    default: false,
+                  },
+                  required: {
+                    type: "boolean",
+                    description: "Required field",
+                    default: false,
+                  },
+                  min: {
+                    type: "number",
+                    description: "Required field",
+                  },
+                  max: {
+                    type: "number",
+                    description: "Required field",
+                  },
+                },
+              },
+              required: ["label", "order"],
+            },
+            optionSliderFields: {
+              type: "array",
+              description:
+                "A field where people will be able to choose options from.",
+              items: {
+                properties: {
+                  label: { type: "string", description: "Field label" },
+                  order: { type: "number", description: "Field order" },
+                  featured: {
+                    type: "boolean",
+                    description: "Show in featured view",
+                    default: false,
+                  },
+                  required: {
+                    type: "boolean",
+                    description: "Required field",
+                    default: false,
+                  },
+                  options: {
+                    type: "array",
+                    description: "Required field",
+                    items: {
+                      type: "string",
+                    },
+                    minItems: 2,
+                    maxItems: 4,
+                    uniqueItems: true,
+                  },
+                },
+              },
+              required: ["label", "order"],
+            },
             dateField: {
               type: "object",
               description: "Single date field for the action",
@@ -714,6 +843,47 @@ export const TOOLS: MCPTool[] = [
                 },
               },
               required: ["label", "order"],
+            },
+            selectField: {
+              type: "object",
+              description: "Values the user will be able to choose from",
+              properties: {
+                label: { type: "string", description: "Field label" },
+                order: { type: "number", description: "Field order" },
+                featured: {
+                  type: "boolean",
+                  description: "Show in featured view",
+                  default: false,
+                },
+                required: {
+                  type: "boolean",
+                  description: "Required field",
+                  default: false,
+                },
+                multiselect: {
+                  type: "boolean",
+                  description:
+                    "Defines if user will be able to choose multiple selections",
+                },
+                options: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      text: {
+                        type: "string",
+                        description: "Required field",
+                      },
+                      emoji: {
+                        type: "string",
+                        description:
+                          "Not required. Emoji in unicode format, e.g :smile:",
+                      },
+                    },
+                  },
+                },
+              },
+              required: ["label", "order", "multiselect", "options"],
             },
           },
         },
@@ -950,7 +1120,7 @@ export const TOOLS: MCPTool[] = [
         fields: {
           type: "object",
           description:
-            "Update the structure and fields for posts created with this action",
+            "Define the structure and fields for posts created with this action. Only 3 fields can be featured. Only 2 fields can be featured if there is a featured media field. Featured fields should be placed at the first positions on field list",
           properties: {
             textFields: {
               type: "array",
@@ -1059,6 +1229,68 @@ export const TOOLS: MCPTool[] = [
                 required: ["label", "order"],
               },
             },
+            valueSliderFields: {
+              type: "array",
+              description:
+                "Value slider where people can choose a value from with a set range (min to max)",
+              items: {
+                properties: {
+                  label: { type: "string", description: "Field label" },
+                  order: { type: "number", description: "Field order" },
+                  featured: {
+                    type: "boolean",
+                    description: "Show in featured view",
+                    default: false,
+                  },
+                  required: {
+                    type: "boolean",
+                    description: "Required field",
+                    default: false,
+                  },
+                  min: {
+                    type: "number",
+                    description: "Required field",
+                  },
+                  max: {
+                    type: "number",
+                    description: "Required field",
+                  },
+                },
+              },
+              required: ["label", "order"],
+            },
+            optionSliderFields: {
+              type: "array",
+              description:
+                "A field where people will be able to choose options from.",
+              items: {
+                properties: {
+                  label: { type: "string", description: "Field label" },
+                  order: { type: "number", description: "Field order" },
+                  featured: {
+                    type: "boolean",
+                    description: "Show in featured view",
+                    default: false,
+                  },
+                  required: {
+                    type: "boolean",
+                    description: "Required field",
+                    default: false,
+                  },
+                  options: {
+                    type: "array",
+                    description: "Required field",
+                    items: {
+                      type: "string",
+                    },
+                    minItems: 2,
+                    maxItems: 4,
+                    uniqueItems: true,
+                  },
+                },
+              },
+              required: ["label", "order"],
+            },
             dateField: {
               type: "object",
               description: "Single date field for the action",
@@ -1077,6 +1309,47 @@ export const TOOLS: MCPTool[] = [
                 },
               },
               required: ["label", "order"],
+            },
+            selectField: {
+              type: "object",
+              description: "Values the user will be able to choose from",
+              properties: {
+                label: { type: "string", description: "Field label" },
+                order: { type: "number", description: "Field order" },
+                featured: {
+                  type: "boolean",
+                  description: "Show in featured view",
+                  default: false,
+                },
+                required: {
+                  type: "boolean",
+                  description: "Required field",
+                  default: false,
+                },
+                multiselect: {
+                  type: "boolean",
+                  description:
+                    "Defines if user will be able to choose multiple selections",
+                },
+                options: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      text: {
+                        type: "string",
+                        description: "Required field",
+                      },
+                      emoji: {
+                        type: "string",
+                        description:
+                          "Not required. Emoji in unicode format, e.g :smile:",
+                      },
+                    },
+                  },
+                },
+              },
+              required: ["label", "order", "multiselect", "options"],
             },
           },
         },
@@ -1199,7 +1472,7 @@ export const TOOLS: MCPTool[] = [
         },
         createdFields: {
           type: "object",
-          description: "New fields to add to the post",
+          description: "Added fields",
           properties: {
             textFields: {
               type: "array",
@@ -1217,8 +1490,7 @@ export const TOOLS: MCPTool[] = [
                 type: "object",
                 properties: {
                   fieldTypeId: { type: "number" },
-                  value: { type: "string" },
-                  linkType: { type: "string" },
+                  text: { type: "string" },
                 },
               },
             },
@@ -1268,7 +1540,65 @@ export const TOOLS: MCPTool[] = [
                 type: "object",
                 properties: {
                   fieldTypeId: { type: "number" },
-                  value: { type: "string", format: "date-time" },
+                  startDate: {
+                    type: "string",
+                    format: "timestamp",
+                    description:
+                      'Example: "1756771200". Only the date will be taken from this timestamp.',
+                  },
+                  endDate: {
+                    type: "string",
+                    format: "timestamp",
+                    description:
+                      'Example: "1756771200". Only the date will be taken from this timestamp',
+                  },
+                  startTime: {
+                    type: "string",
+                    format: "timestamp",
+                    description:
+                      'Example: "1756771200". Only the time will be taken from this timestamp.',
+                  },
+                  endTime: {
+                    type: "string",
+                    format: "timestamp",
+                    description:
+                      'Example: "1756771200". Only the time will be taken from this timestamp',
+                  },
+                },
+              },
+            },
+            selectFields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  fieldTypeId: { type: "number" },
+                  options: {
+                    type: "array",
+                    items: {
+                      type: "number",
+                    },
+                  },
+                },
+              },
+            },
+            valueSliderFields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  fieldTypeId: { type: "number" },
+                  value: { type: "number" },
+                },
+              },
+            },
+            optionSliderFields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  fieldTypeId: { type: "number" },
+                  index: { type: "number" },
                 },
               },
             },
@@ -1276,7 +1606,7 @@ export const TOOLS: MCPTool[] = [
         },
         updatedFields: {
           type: "object",
-          description: "Existing fields to update",
+          description: "Custom field values based on the action template",
           properties: {
             textFields: {
               type: "array",
@@ -1294,8 +1624,7 @@ export const TOOLS: MCPTool[] = [
                 type: "object",
                 properties: {
                   fieldTypeId: { type: "number" },
-                  value: { type: "string" },
-                  linkType: { type: "string" },
+                  text: { type: "string" },
                 },
               },
             },
@@ -1345,7 +1674,65 @@ export const TOOLS: MCPTool[] = [
                 type: "object",
                 properties: {
                   fieldTypeId: { type: "number" },
-                  value: { type: "string", format: "date-time" },
+                  startDate: {
+                    type: "string",
+                    format: "timestamp",
+                    description:
+                      'Example: "1756771200". Only the date will be taken from this timestamp.',
+                  },
+                  endDate: {
+                    type: "string",
+                    format: "timestamp",
+                    description:
+                      'Example: "1756771200". Only the date will be taken from this timestamp',
+                  },
+                  startTime: {
+                    type: "string",
+                    format: "timestamp",
+                    description:
+                      'Example: "1756771200". Only the time will be taken from this timestamp.',
+                  },
+                  endTime: {
+                    type: "string",
+                    format: "timestamp",
+                    description:
+                      'Example: "1756771200". Only the time will be taken from this timestamp',
+                  },
+                },
+              },
+            },
+            selectFields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  fieldTypeId: { type: "number" },
+                  options: {
+                    type: "array",
+                    items: {
+                      type: "number",
+                    },
+                  },
+                },
+              },
+            },
+            valueSliderFields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  fieldTypeId: { type: "number" },
+                  value: { type: "number" },
+                },
+              },
+            },
+            optionSliderFields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  fieldTypeId: { type: "number" },
+                  index: { type: "number" },
                 },
               },
             },
