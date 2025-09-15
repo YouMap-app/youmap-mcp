@@ -1,6 +1,16 @@
 import axios from "axios";
 export const TOOLS = [
     {
+        name: "test",
+        description: "test",
+        inputSchema: {
+            type: "string",
+        },
+        handler: async (args, client) => {
+            console.log("test");
+        },
+    },
+    {
         name: "create_map",
         description: "Create a new map for a user. Maps are spaces where users can add posts, places, and organize content geographically.",
         inputSchema: {
