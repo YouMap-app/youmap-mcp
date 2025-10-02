@@ -18,6 +18,8 @@ class YouMapMCPServer {
       {
         name: "youmap-mcp",
         version: "1.0.0",
+        description:
+          "YouMap MCP Server - Create interactive maps, posts, actions and manage geographic content through the YouMap platform API",
       },
       {
         capabilities: {
@@ -89,7 +91,9 @@ class YouMapMCPServer {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
 
-    console.error("YouMap MCP server started");
+    console.error(
+      "YouMap MCP Server (youmap-mcp) started - Ready to manage maps and geographic content"
+    );
   }
 }
 

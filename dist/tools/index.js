@@ -246,7 +246,7 @@ export const TOOLS = [
                                 type: "object",
                                 properties: {
                                     fieldTypeId: { type: "number" },
-                                    value: { type: "string" },
+                                    text: { type: "string" },
                                 },
                             },
                         },
@@ -1392,7 +1392,7 @@ export const TOOLS = [
                                 type: "object",
                                 properties: {
                                     fieldTypeId: { type: "number" },
-                                    value: { type: "string" },
+                                    text: { type: "string" },
                                 },
                             },
                         },
