@@ -11,6 +11,7 @@ class YouMapMCPServer {
         this.server = new Server({
             name: "youmap-mcp",
             version: "1.0.0",
+            description: "YouMap MCP Server - Create interactive maps, posts, actions and manage geographic content through the YouMap platform API",
         }, {
             capabilities: {
                 tools: {},
@@ -69,7 +70,7 @@ class YouMapMCPServer {
     async start() {
         const transport = new StdioServerTransport();
         await this.server.connect(transport);
-        console.error("YouMap MCP server started");
+        console.error("YouMap MCP Server (youmap-mcp) started - Ready to manage maps and geographic content");
     }
 }
 const server = new YouMapMCPServer();

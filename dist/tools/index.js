@@ -1,15 +1,32 @@
 import axios from "axios";
+function parseValidationErrors(errorResponse) {
+    if (!errorResponse?.data?.details?.message ||
+        !Array.isArray(errorResponse.data.details.message)) {
+        return errorResponse?.data?.message || "Invalid request data";
+    }
+    const errors = errorResponse.data.details.message;
+    const errorMessages = [];
+    function extractConstraints(error, path = "") {
+        if (error.constraints) {
+            const field = path ? `${path}.${error.property}` : error.property;
+            Object.values(error.constraints).forEach((constraint) => {
+                errorMessages.push(`${field}: ${constraint}`);
+            });
+        }
+        if (error.children && error.children.length > 0) {
+            const newPath = path ? `${path}.${error.property}` : error.property;
+            error.children.forEach((child) => extractConstraints(child, newPath));
+        }
+    }
+    errors.forEach((error) => extractConstraints(error));
+    if (errorMessages.length === 0) {
+        return "Validation failed with unknown error";
+    }
+    return `Validation failed:\n${errorMessages
+        .map((msg) => `  - ${msg}`)
+        .join("\n")}`;
+}
 export const TOOLS = [
-    {
-        name: "test",
-        description: "test",
-        inputSchema: {
-            type: "string",
-        },
-        handler: async (args, client) => {
-            console.log("test");
-        },
-    },
     {
         name: "create_map",
         description: "Create a new map for a user. Maps are spaces where users can add posts, places, and organize content geographically.",
@@ -107,8 +124,8 @@ export const TOOLS = [
                     throw new Error("Access denied. You don't have permission to create maps.");
                 }
                 else if (error.response?.status === 400) {
-                    const errorDetails = error.response.data?.message || "Invalid request data";
-                    throw new Error(`Validation error: ${errorDetails}`);
+                    const validationDetails = parseValidationErrors(error.response);
+                    throw new Error(`Validation error: ${validationDetails}`);
                 }
                 else {
                     throw new Error(`Failed to create map: ${error.message}`);
@@ -414,8 +431,8 @@ export const TOOLS = [
                     throw new Error("Access denied. You don't have permission to create posts on this map.");
                 }
                 else if (error.response?.status === 400) {
-                    const errorDetails = error.response.data?.message || "Invalid request data";
-                    throw new Error(`Validation error: ${errorDetails}`);
+                    const validationDetails = parseValidationErrors(error.response);
+                    throw new Error(`Validation error: ${validationDetails}`);
                 }
                 else if (error.response?.status === 404) {
                     throw new Error("Map not found. Please check the mapId and ensure the map exists.");
@@ -871,8 +888,8 @@ export const TOOLS = [
                     throw new Error("Access denied. You don't have permission to create actions on this map.");
                 }
                 else if (error.response?.status === 400) {
-                    const errorDetails = error.response.data?.message || "Invalid request data";
-                    throw new Error(`Validation error: ${errorDetails}`);
+                    const validationDetails = parseValidationErrors(error.response);
+                    throw new Error(`Validation error: ${validationDetails}`);
                 }
                 else if (error.response?.status === 404) {
                     throw new Error("Map not found. Please check the mapId and ensure the map exists.");
@@ -1321,8 +1338,8 @@ export const TOOLS = [
                     throw new Error("Access denied. You don't have permission to update this action.");
                 }
                 else if (error.response?.status === 400) {
-                    const errorDetails = error.response.data?.message || "Invalid request data";
-                    throw new Error(`Validation error: ${errorDetails}`);
+                    const validationDetails = parseValidationErrors(error.response);
+                    throw new Error(`Validation error: ${validationDetails}`);
                 }
                 else if (error.response?.status === 404) {
                     throw new Error(`Action not found. Please check the actionId ${args.actionId} and version ${args.version}.`);
@@ -1667,7 +1684,8 @@ export const TOOLS = [
                     throw new Error("Post not found. Please check the postId and ensure the post exists.");
                 }
                 else if (error.response?.status === 400) {
-                    throw new Error(`Validation failed: ${error.response?.data?.message || error.message}`);
+                    const validationDetails = parseValidationErrors(error.response);
+                    throw new Error(`Validation error: ${validationDetails}`);
                 }
                 else {
                     throw new Error(`Failed to update post: ${error.message}`);
@@ -2173,8 +2191,8 @@ export const TOOLS = [
                     throw new Error("Action not found. Please check the actionId and ensure the action exists.");
                 }
                 else if (error.response?.status === 400) {
-                    const errorDetails = error.response.data?.message || "Invalid request data";
-                    throw new Error(`Validation error: ${errorDetails}`);
+                    const validationDetails = parseValidationErrors(error.response);
+                    throw new Error(`Validation error: ${validationDetails}`);
                 }
                 else {
                     throw new Error(`Failed to delete action: ${error.message}`);
@@ -2221,8 +2239,8 @@ export const TOOLS = [
                     throw new Error("Map not found. Please check the mapId and ensure the map exists.");
                 }
                 else if (error.response?.status === 400) {
-                    const errorDetails = error.response.data?.message || "Invalid request data";
-                    throw new Error(`Validation error: ${errorDetails}`);
+                    const validationDetails = parseValidationErrors(error.response);
+                    throw new Error(`Validation error: ${validationDetails}`);
                 }
                 else {
                     throw new Error(`Failed to delete map: ${error.message}`);
@@ -2290,9 +2308,10 @@ export const TOOLS = [
                                 error: `Post with ID ${args.postId} not found.`,
                             };
                         case 400:
+                            const validationDetails = parseValidationErrors(error.response);
                             return {
                                 success: false,
-                                error: `Bad request: ${message}`,
+                                error: `Validation error: ${validationDetails}`,
                             };
                         default:
                             return {
@@ -2427,9 +2446,10 @@ export const TOOLS = [
                                 error: `Map with ID ${args.mapId} not found.`,
                             };
                         case 400:
+                            const validationDetails = parseValidationErrors(error.response);
                             return {
                                 success: false,
-                                error: `Bad request: ${message}`,
+                                error: `Validation error: ${validationDetails}`,
                             };
                         default:
                             return {
