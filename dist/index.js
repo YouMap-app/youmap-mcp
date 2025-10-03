@@ -36,35 +36,21 @@ class YouMapMCPServer {
         });
         this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
             const { name, arguments: args } = request.params;
-            try {
-                const tool = TOOLS.find((t) => t.name === name);
-                if (!tool) {
-                    throw new Error(`Unknown tool: ${name}`);
-                }
-                const result = await tool.handler(args, this.youmapClient);
-                return {
-                    content: [
-                        {
-                            type: "text",
-                            text: typeof result === "string"
-                                ? result
-                                : JSON.stringify(result, null, 2),
-                        },
-                    ],
-                };
+            const tool = TOOLS.find((t) => t.name === name);
+            if (!tool) {
+                throw new Error(`Unknown tool: ${name}`);
             }
-            catch (error) {
-                const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-                return {
-                    content: [
-                        {
-                            type: "text",
-                            text: `Error: ${errorMessage}`,
-                        },
-                    ],
-                    isError: true,
-                };
-            }
+            const result = await tool.handler(args, this.youmapClient);
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: typeof result === "string"
+                            ? result
+                            : JSON.stringify(result, null, 2),
+                    },
+                ],
+            };
         });
     }
     async start() {
