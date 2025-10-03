@@ -353,7 +353,7 @@ export const TOOLS: MCPTool[] = [
                 },
               },
             },
-            dateFields: {
+            dateField: {
               type: "array",
               items: {
                 type: "object",
@@ -1558,7 +1558,7 @@ export const TOOLS: MCPTool[] = [
                 },
               },
             },
-            dateFields: {
+            dateField: {
               type: "array",
               items: {
                 type: "object",
@@ -1692,7 +1692,7 @@ export const TOOLS: MCPTool[] = [
                 },
               },
             },
-            dateFields: {
+            dateField: {
               type: "array",
               items: {
                 type: "object",
@@ -1778,7 +1778,7 @@ export const TOOLS: MCPTool[] = [
           Object.entries(updateData).filter(([, value]) => value !== undefined)
         );
 
-        const response = await client.patch(
+        const response = await client.post(
           `/api/v1/post/${postId}`,
           cleanUpdateData
         );
