@@ -52,24 +52,30 @@ class YouMapMCPServer {
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
-      const tool = TOOLS.find((t) => t.name === name);
-      if (!tool) {
-        throw new Error(`Unknown tool: ${name}`);
+      try {
+        const tool = TOOLS.find((t) => t.name === name);
+        if (!tool) {
+          throw new Error(`Unknown tool: ${name}`);
+        }
+
+        const result = await tool.handler(args, this.youmapClient);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text:
+                typeof result === "string"
+                  ? result
+                  : JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error(`Error in tool ${name}:`, error);
+        // Re-throw the error so MCP can handle it with proper JSON-RPC error response
+        throw error;
       }
-
-      const result = await tool.handler(args, this.youmapClient);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text:
-              typeof result === "string"
-                ? result
-                : JSON.stringify(result, null, 2),
-          },
-        ],
-      };
     });
   }
 
