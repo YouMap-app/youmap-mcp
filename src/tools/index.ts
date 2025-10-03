@@ -2509,27 +2509,17 @@ export const TOOLS: MCPTool[] = [
       try {
         // Validate input
         if (!args.postId || typeof args.postId !== "number") {
-          return {
-            success: false,
-            error: "Post ID is required and must be a number",
-          };
+          throw new Error("Post ID is required and must be a number");
         }
 
         // Make API request to delete the post
         const response = await client.delete(`/posts/${args.postId}`);
 
-        if (response.success) {
-          return {
-            success: true,
-            message: `Post with ID ${args.postId} has been deleted successfully`,
-            postId: args.postId,
-          };
-        } else {
-          return {
-            success: false,
-            error: response.error || "Failed to delete post",
-          };
-        }
+        return {
+          success: true,
+          message: `Post with ID ${args.postId} has been deleted successfully`,
+          postId: args.postId,
+        };
       } catch (error: any) {
         // Handle specific HTTP error responses
         if (error.response) {
@@ -2538,40 +2528,24 @@ export const TOOLS: MCPTool[] = [
 
           switch (status) {
             case 401:
-              return {
-                success: false,
-                error:
-                  "Authentication required. Please check your access token.",
-              };
+              throw new Error(
+                "Authentication required. Please check your access token."
+              );
             case 403:
-              return {
-                success: false,
-                error:
-                  "Access denied. You don't have permission to delete this post.",
-              };
+              throw new Error(
+                "Access denied. You don't have permission to delete this post."
+              );
             case 404:
-              return {
-                success: false,
-                error: `Post with ID ${args.postId} not found.`,
-              };
+              throw new Error(`Post with ID ${args.postId} not found.`);
             case 400:
               const validationDetails = parseValidationErrors(error.response);
-              return {
-                success: false,
-                error: `Validation error: ${validationDetails}`,
-              };
+              throw new Error(`Validation error: ${validationDetails}`);
             default:
-              return {
-                success: false,
-                error: `Server error (${status}): ${message}`,
-              };
+              throw new Error(`Server error (${status}): ${message}`);
           }
         }
 
-        return {
-          success: false,
-          error: `Network error: ${error.message}`,
-        };
+        throw new Error(`Network error: ${error.message}`);
       }
     },
   },
@@ -2644,10 +2618,7 @@ export const TOOLS: MCPTool[] = [
       try {
         // Validate input
         if (!args.mapId || typeof args.mapId !== "number") {
-          return {
-            success: false,
-            error: "Map ID is required and must be a number",
-          };
+          throw new Error("Map ID is required and must be a number");
         }
 
         // Extract mapId and prepare update payload
@@ -2659,27 +2630,17 @@ export const TOOLS: MCPTool[] = [
           .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
 
         if (Object.keys(cleanUpdateData).length === 0) {
-          return {
-            success: false,
-            error: "At least one field must be provided for update",
-          };
+          throw new Error("At least one field must be provided for update");
         }
 
         // Make API request to update the map
         const response = await client.post(`/maps/${mapId}`, cleanUpdateData);
 
-        if (response.success) {
-          return {
-            success: true,
-            message: `Map with ID ${mapId} has been updated successfully`,
-            map: response.data,
-          };
-        } else {
-          return {
-            success: false,
-            error: response.error || "Failed to update map",
-          };
-        }
+        return {
+          success: true,
+          message: `Map with ID ${mapId} has been updated successfully`,
+          map: response.data,
+        };
       } catch (error: any) {
         // Handle specific HTTP error responses
         if (error.response) {
@@ -2688,40 +2649,24 @@ export const TOOLS: MCPTool[] = [
 
           switch (status) {
             case 401:
-              return {
-                success: false,
-                error:
-                  "Authentication required. Please check your access token.",
-              };
+              throw new Error(
+                "Authentication required. Please check your access token."
+              );
             case 403:
-              return {
-                success: false,
-                error:
-                  "Access denied. You don't have permission to update this map.",
-              };
+              throw new Error(
+                "Access denied. You don't have permission to update this map."
+              );
             case 404:
-              return {
-                success: false,
-                error: `Map with ID ${args.mapId} not found.`,
-              };
+              throw new Error(`Map with ID ${args.mapId} not found.`);
             case 400:
               const validationDetails = parseValidationErrors(error.response);
-              return {
-                success: false,
-                error: `Validation error: ${validationDetails}`,
-              };
+              throw new Error(`Validation error: ${validationDetails}`);
             default:
-              return {
-                success: false,
-                error: `Server error (${status}): ${message}`,
-              };
+              throw new Error(`Server error (${status}): ${message}`);
           }
         }
 
-        return {
-          success: false,
-          error: `Network error: ${error.message}`,
-        };
+        throw new Error(`Network error: ${error.message}`);
       }
     },
   },

@@ -27,6 +27,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "@youmap/youmap-mcp": "^1.4.0",
     "axios": "^1.7.0",
     "zod": "^3.22.0"
   },
