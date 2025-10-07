@@ -315,7 +315,7 @@ export const TOOLS = [
                                 },
                             },
                         },
-                        dateFields: {
+                        dateField: {
                             type: "array",
                             items: {
                                 type: "object",
@@ -923,23 +923,6 @@ export const TOOLS = [
                     minimum: 0,
                     default: 0,
                 },
-                orderBy: {
-                    type: "string",
-                    enum: ["id", "name", "emoji", "created_at", "updated_at", "order"],
-                    description: "How to order the results (default: 'order')",
-                    default: "order",
-                },
-                sort: {
-                    type: "string",
-                    enum: ["asc", "desc"],
-                    description: "Sort direction (default: 'asc')",
-                    default: "asc",
-                },
-                enabledOnly: {
-                    type: "boolean",
-                    description: "Only return enabled actions (default: true)",
-                    default: true,
-                },
                 phrase: {
                     type: "string",
                     description: "Search phrase to filter actions by name",
@@ -952,9 +935,6 @@ export const TOOLS = [
                 const params = {
                     limit: args.limit || 20,
                     offset: args.offset || 0,
-                    orderBy: args.orderBy || "order",
-                    sort: args.sort || "asc",
-                    enabledOnly: args.enabledOnly !== false,
                 };
                 if (args.phrase) {
                     params.phrase = args.phrase;
@@ -1461,7 +1441,7 @@ export const TOOLS = [
                                 },
                             },
                         },
-                        dateFields: {
+                        dateField: {
                             type: "array",
                             items: {
                                 type: "object",
@@ -1589,7 +1569,7 @@ export const TOOLS = [
                                 },
                             },
                         },
-                        dateFields: {
+                        dateField: {
                             type: "array",
                             items: {
                                 type: "object",
@@ -1667,7 +1647,7 @@ export const TOOLS = [
             try {
                 const { postId, ...updateData } = args;
                 const cleanUpdateData = Object.fromEntries(Object.entries(updateData).filter(([, value]) => value !== undefined));
-                const response = await client.patch(`/api/v1/post/${postId}`, cleanUpdateData);
+                const response = await client.post(`/api/v1/post/${postId}`, cleanUpdateData);
                 return {
                     success: true,
                     data: response.data,
