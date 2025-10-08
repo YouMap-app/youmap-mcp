@@ -354,35 +354,32 @@ export const TOOLS: MCPTool[] = [
               },
             },
             dateField: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  fieldTypeId: { type: "number" },
-                  startDate: {
-                    type: "string",
-                    format: "timestamp",
-                    description:
-                      'Example: "1756771200". Only the date will be taken from this timestamp.',
-                  },
-                  endDate: {
-                    type: "string",
-                    format: "timestamp",
-                    description:
-                      'Example: "1756771200". Only the date will be taken from this timestamp',
-                  },
-                  startTime: {
-                    type: "string",
-                    format: "timestamp",
-                    description:
-                      'Example: "1756771200". Only the time will be taken from this timestamp.',
-                  },
-                  endTime: {
-                    type: "string",
-                    format: "timestamp",
-                    description:
-                      'Example: "1756771200". Only the time will be taken from this timestamp',
-                  },
+              type: "object",
+              properties: {
+                fieldTypeId: { type: "number" },
+                startDate: {
+                  type: "string",
+                  format: "timestamp",
+                  description:
+                    'Example: "1756771200". Only the date will be taken from this timestamp.',
+                },
+                endDate: {
+                  type: "string",
+                  format: "timestamp",
+                  description:
+                    'Example: "1756771200". Only the date will be taken from this timestamp',
+                },
+                startTime: {
+                  type: "string",
+                  format: "timestamp",
+                  description:
+                    'Example: "1756771200". Only the time will be taken from this timestamp.',
+                },
+                endTime: {
+                  type: "string",
+                  format: "timestamp",
+                  description:
+                    'Example: "1756771200". Only the time will be taken from this timestamp',
                 },
               },
             },
