@@ -542,7 +542,7 @@ export const TOOLS: MCPTool[] = [
         const params: any = {
           limit: args.limit || 20,
           offset: args.offset || 0,
-          orderBy: args.orderBy || "trending",
+          orderBy: args.orderBy || "newest",
         };
 
         if (args.orderBy === "distance") {

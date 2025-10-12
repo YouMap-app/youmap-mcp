@@ -316,31 +316,28 @@ export const TOOLS = [
                             },
                         },
                         dateField: {
-                            type: "array",
-                            items: {
-                                type: "object",
-                                properties: {
-                                    fieldTypeId: { type: "number" },
-                                    startDate: {
-                                        type: "string",
-                                        format: "timestamp",
-                                        description: 'Example: "1756771200". Only the date will be taken from this timestamp.',
-                                    },
-                                    endDate: {
-                                        type: "string",
-                                        format: "timestamp",
-                                        description: 'Example: "1756771200". Only the date will be taken from this timestamp',
-                                    },
-                                    startTime: {
-                                        type: "string",
-                                        format: "timestamp",
-                                        description: 'Example: "1756771200". Only the time will be taken from this timestamp.',
-                                    },
-                                    endTime: {
-                                        type: "string",
-                                        format: "timestamp",
-                                        description: 'Example: "1756771200". Only the time will be taken from this timestamp',
-                                    },
+                            type: "object",
+                            properties: {
+                                fieldTypeId: { type: "number" },
+                                startDate: {
+                                    type: "string",
+                                    format: "timestamp",
+                                    description: 'Example: "1756771200". Only the date will be taken from this timestamp.',
+                                },
+                                endDate: {
+                                    type: "string",
+                                    format: "timestamp",
+                                    description: 'Example: "1756771200". Only the date will be taken from this timestamp',
+                                },
+                                startTime: {
+                                    type: "string",
+                                    format: "timestamp",
+                                    description: 'Example: "1756771200". Only the time will be taken from this timestamp.',
+                                },
+                                endTime: {
+                                    type: "string",
+                                    format: "timestamp",
+                                    description: 'Example: "1756771200". Only the time will be taken from this timestamp',
                                 },
                             },
                         },
@@ -497,7 +494,7 @@ export const TOOLS = [
                 const params = {
                     limit: args.limit || 20,
                     offset: args.offset || 0,
-                    orderBy: args.orderBy || "trending",
+                    orderBy: args.orderBy || "newest",
                 };
                 if (args.orderBy === "distance") {
                     if (!args.centerLatitude || !args.centerLongitude) {

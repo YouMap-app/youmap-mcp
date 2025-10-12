@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  youmap-mcp:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - MCP_MODE=http
+      - PORT=3000
+      - YOUMAP_BASE_URL=${YOUMAP_BASE_URL}
+      - YOUMAP_CLIENT_ID=${YOUMAP_CLIENT_ID}
+      - YOUMAP_CLIENT_SECRET=${YOUMAP_CLIENT_SECRET}
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
+      timeout: 5s
+      interval: 30s
+      retries: 3
+      start_period: 40s
