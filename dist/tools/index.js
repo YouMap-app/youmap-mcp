@@ -465,8 +465,8 @@ export const TOOLS = [
                 },
                 orderBy: {
                     type: "string",
-                    enum: ["trending", "newest", "oldest", "distance"],
-                    description: "How to order the results (default: trending)",
+                    enum: ["trending", "recent"],
+                    description: "How to order the results (default: recent)",
                     default: "trending",
                 },
                 centerLatitude: {
@@ -494,17 +494,8 @@ export const TOOLS = [
                 const params = {
                     limit: args.limit || 20,
                     offset: args.offset || 0,
-                    orderBy: args.orderBy || "newest",
+                    orderBy: args.orderBy || "recent",
                 };
-                if (args.orderBy === "distance") {
-                    if (!args.centerLatitude || !args.centerLongitude) {
-                        throw new Error("centerLatitude and centerLongitude are required when orderBy is 'distance'");
-                    }
-                    params.position = {
-                        lat: args.centerLatitude,
-                        lon: args.centerLongitude,
-                    };
-                }
                 if (args.filterActionIds && args.filterActionIds.length > 0) {
                     params.filterActionIds = args.filterActionIds;
                 }

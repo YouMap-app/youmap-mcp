@@ -513,7 +513,7 @@ export const TOOLS: MCPTool[] = [
           type: "string",
           enum: ["trending", "recent"],
           description: "How to order the results (default: recent)",
-          default: "trending",
+          default: "recent",
         },
         centerLatitude: {
           type: "number",
