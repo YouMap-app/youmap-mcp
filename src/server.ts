@@ -229,10 +229,13 @@ class YouMapMCPServer {
       const { jsonrpc, method, params, id } = req.body;
 
       console.log("=== MCP JSON-RPC REQUEST ===");
-      console.log("Client ID:", clientId);
+      console.log("Client ID:", clientId.substring(0, 8) + "...");
       console.log("Method:", method);
       console.log("Params:", params);
+      console.log("JSON-RPC Version:", jsonrpc);
+      console.log("Request ID:", id);
       console.log("Headers Accept:", req.get("Accept"));
+      console.log("Full Request Body:", JSON.stringify(req.body, null, 2));
       console.log("============================");
 
       // Validate JSON-RPC
@@ -265,6 +268,28 @@ class YouMapMCPServer {
 
         switch (method) {
           case "tools/list":
+          case "list":
+          case "list_tools":
+          case "initialize":
+          case "list_actions":
+            // Handle initialize method for MCP protocol
+            if (method === "initialize") {
+              return res.json({
+                jsonrpc: "2.0",
+                result: {
+                  protocolVersion: "2024-11-05",
+                  capabilities: {
+                    tools: {},
+                  },
+                  serverInfo: {
+                    name: "youmap-mcp",
+                    version: "1.0.0",
+                  },
+                },
+                id: id,
+              });
+            }
+
             const tools = TOOLS.map((tool) => ({
               name: tool.name,
               description: tool.description,
@@ -280,6 +305,8 @@ class YouMapMCPServer {
             });
 
           case "tools/call":
+          case "call_tool":
+          case "call_action":
             const { name, arguments: args } = params || {};
 
             if (!name) {
