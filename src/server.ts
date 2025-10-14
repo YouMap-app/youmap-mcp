@@ -215,8 +215,7 @@ class YouMapMCPServer {
       clientSecret: string
     ): YouMapClient => {
       return new YouMapClient({
-        baseURL:
-          process.env.YOUMAP_BASE_URL || "https://developer.youmap.com/api/v1/",
+        baseURL: process.env.YOUMAP_BASE_URL || "https://developer.youmap.com",
         clientId,
         clientSecret,
       });

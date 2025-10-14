@@ -225,6 +225,7 @@ export const TOOLS: MCPTool[] = [
             "Access denied. You don't have permission to list maps."
           );
         } else {
+          console.log(error);
           throw new Error(`Failed to list maps: ${error.message}`);
         }
       }
