@@ -4,6 +4,9 @@ export interface YouMapClientConfig {
   baseURL: string;
   clientId?: string;
   clientSecret?: string;
+  serpApiKey?: string;
+  unsplashAccessKey?: string;
+  bflApiKey?: string;
 }
 
 interface AuthTokens {
@@ -162,5 +165,18 @@ export class YouMapClient {
   async patch(path: string, data?: any) {
     const response = await this.client.patch(path, data);
     return response.data;
+  }
+
+  // Getter methods for API keys
+  get serpApiKey(): string | undefined {
+    return this.config.serpApiKey;
+  }
+
+  get unsplashAccessKey(): string | undefined {
+    return this.config.unsplashAccessKey;
+  }
+
+  get bflApiKey(): string | undefined {
+    return this.config.bflApiKey;
   }
 }

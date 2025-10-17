@@ -1835,10 +1835,10 @@ export const TOOLS: MCPTool[] = [
         outputFormat = "jpeg",
       } = args;
 
-      const bflApiKey = process.env.BFL_API_KEY;
+      const bflApiKey = client.bflApiKey;
       if (!bflApiKey) {
         throw new Error(
-          "BFL_API_KEY environment variable is not configured. Please set your Black Forest Labs API key in the MCP server configuration."
+          "BFL_API_KEY is not configured. Please provide the BFL API key in the MCP server URL query parameters: ?bflApiKey=your_key_here"
         );
       }
 
@@ -2010,18 +2010,18 @@ export const TOOLS: MCPTool[] = [
     handler: async (args: any, client: YouMapClient) => {
       const { query } = args;
 
-      const serpApiKey = process.env.SERP_API_KEY;
-      const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY;
+      const serpApiKey = client.serpApiKey;
+      const unsplashAccessKey = client.unsplashAccessKey;
 
       if (!serpApiKey) {
         throw new Error(
-          "SERP_API_KEY environment variable is not configured. Please set your SerpAPI key in the MCP server configuration."
+          "SERP_API_KEY is not configured. Please provide the SERP API key in the MCP server URL query parameters: ?serpApiKey=your_key_here"
         );
       }
 
       if (!unsplashAccessKey) {
         throw new Error(
-          "UNSPLASH_ACCESS_KEY environment variable is not configured. Please set your Unsplash access key in the MCP server configuration."
+          "UNSPLASH_ACCESS_KEY is not configured. Please provide the Unsplash access key in the MCP server URL query parameters: ?unsplashAccessKey=your_key_here"
         );
       }
 

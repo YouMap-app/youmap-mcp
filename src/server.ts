@@ -209,32 +209,41 @@ class YouMapMCPServer {
 
     this.app.use(checkMCPHeaders);
 
-    // Helper function to create YouMap client with credentials
+    // Helper function to create YouMap client with credentials and API keys
     const createYouMapClient = (
       clientId: string,
-      clientSecret: string
+      clientSecret?: string,
+      serpApiKey?: string,
+      unsplashAccessKey?: string,
+      bflApiKey?: string
     ): YouMapClient => {
       return new YouMapClient({
         baseURL: process.env.YOUMAP_BASE_URL || "https://developer.youmap.com",
         clientId,
         clientSecret,
+        serpApiKey,
+        unsplashAccessKey,
+        bflApiKey,
       });
     };
 
-    // JSON-RPC MCP endpoint - AgentKit compatible
-    // URL format: /:clientId/:clientSecret/v1/mcp
+    // JSON-RPC MCP endpoint - AgentKit compatible with API keys support
+    // URL format: /:clientId/:clientSecret/v1/mcp?serpApiKey=...&unsplashAccessKey=...&bflApiKey=...
     this.app.post("/:clientId/:clientSecret/v1/mcp", async (req, res) => {
       const { clientId, clientSecret } = req.params;
+      const { serpApiKey, unsplashAccessKey, bflApiKey } = req.query;
       const { jsonrpc, method, params, id } = req.body;
 
       console.log("=== MCP JSON-RPC REQUEST ===");
       console.log("Client ID:", clientId.substring(0, 8) + "...");
       console.log("Method:", method);
+      console.log("Has SERP API Key:", !!serpApiKey);
+      console.log("Has Unsplash Key:", !!unsplashAccessKey);
+      console.log("Has BFL API Key:", !!bflApiKey);
       console.log("Params:", params);
       console.log("JSON-RPC Version:", jsonrpc);
       console.log("Request ID:", id);
       console.log("Headers Accept:", req.get("Accept"));
-      console.log("Full Request Body:", JSON.stringify(req.body, null, 2));
       console.log("============================");
 
       // Validate JSON-RPC
@@ -262,8 +271,14 @@ class YouMapMCPServer {
       }
 
       try {
-        // Create YouMap client with provided credentials
-        const youmapClient = createYouMapClient(clientId, clientSecret);
+        // Create YouMap client with provided credentials and API keys
+        const youmapClient = createYouMapClient(
+          clientId,
+          clientSecret,
+          serpApiKey as string,
+          unsplashAccessKey as string,
+          bflApiKey as string
+        );
 
         switch (method) {
           case "tools/list":
