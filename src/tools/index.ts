@@ -103,11 +103,26 @@ export const TOOLS: MCPTool[] = [
           type: "object",
           description: "Coordinates for the initial map view",
           properties: {
-            north: { type: "number", description: "North latitude" },
-            south: { type: "number", description: "South latitude" },
-            east: { type: "number", description: "East longitude" },
-            west: { type: "number", description: "West longitude" },
+            leftBottom: {
+              type: "object",
+              description: "Bottom-left corner coordinates",
+              properties: {
+                lat: { type: "number", description: "Latitude" },
+                lon: { type: "number", description: "Longitude" },
+              },
+              required: ["lat", "lon"],
+            },
+            rightTop: {
+              type: "object",
+              description: "Top-right corner coordinates",
+              properties: {
+                lat: { type: "number", description: "Latitude" },
+                lon: { type: "number", description: "Longitude" },
+              },
+              required: ["lat", "lon"],
+            },
           },
+          required: ["leftBottom", "rightTop"],
         },
       },
       required: ["name"],
@@ -2571,11 +2586,26 @@ export const TOOLS: MCPTool[] = [
           type: "object",
           description: "Coordinates for the map view",
           properties: {
-            north: { type: "number", description: "North latitude" },
-            south: { type: "number", description: "South latitude" },
-            east: { type: "number", description: "East longitude" },
-            west: { type: "number", description: "West longitude" },
+            leftBottom: {
+              type: "object",
+              description: "Bottom-left corner coordinates",
+              properties: {
+                lat: { type: "number", description: "Latitude" },
+                lon: { type: "number", description: "Longitude" },
+              },
+              required: ["lat", "lon"],
+            },
+            rightTop: {
+              type: "object",
+              description: "Top-right corner coordinates",
+              properties: {
+                lat: { type: "number", description: "Latitude" },
+                lon: { type: "number", description: "Longitude" },
+              },
+              required: ["lat", "lon"],
+            },
           },
+          required: ["leftBottom", "rightTop"],
         },
       },
       required: ["mapId"],
