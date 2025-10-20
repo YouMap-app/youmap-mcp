@@ -1,5 +1,6 @@
 import { YouMapClient } from "../client.js";
 import axios from "axios";
+import { EMOJI_SHORTNAMES } from "../data/emoji-shortnames.js";
 
 export interface MCPTool {
   name: string;
@@ -628,6 +629,92 @@ export const TOOLS: MCPTool[] = [
     },
   },
   {
+    name: "search_posts_by_name",
+    description:
+      "Search for posts by their names across all user's posts. This searches the post names (titles) specifically. Use this when you need to find posts with specific names or titles from all users, not just the logged in one.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        phrase: {
+          type: "string",
+          description: "Search phrase to find in post names/titles (required)",
+        },
+        limit: {
+          type: "number",
+          description: "Maximum number of posts to return (1-100, default: 20)",
+          minimum: 1,
+          maximum: 100,
+          default: 20,
+        },
+        offset: {
+          type: "number",
+          description: "Number of posts to skip for pagination (default: 0)",
+          minimum: 0,
+          default: 0,
+        },
+      },
+      required: ["phrase"],
+    },
+    handler: async (args: any, client: YouMapClient) => {
+      try {
+        const params: any = {
+          phrase: args.phrase,
+          limit: args.limit || 20,
+          offset: args.offset || 0,
+        };
+
+        const result = await client.get("/api/v1/post/search/name", params);
+
+        return {
+          success: true,
+          message: `Found ${result.count} post(s) with names matching "${args.phrase}"`,
+          searchQuery: args.phrase,
+          pagination: {
+            total: result.count,
+            limit: params.limit,
+            offset: params.offset,
+            hasMore: params.offset + params.limit < result.count,
+          },
+          posts: result.posts.map((post: any) => ({
+            id: post.id,
+            name: post.name,
+            description: post.description,
+            latitude: post.lat,
+            longitude: post.lon,
+            mapId: post.mapId,
+            userId: post.userId,
+            actionId: post.actionId,
+            actionName: post.actionName,
+            emoji: post.emoji,
+            address: post.address,
+            isEditable: post.isEditable,
+            isPublic: post.isPublic,
+            isQuickPost: post.isQuickPost,
+            voteCount: post.voteCount,
+            commentsCount: post.commentsCount,
+            categoryIds: post.categoryIds,
+            createdAt: post.createdAt,
+            updatedAt: post.updatedAt,
+            score: post.score,
+            url: `https://youmap.com/post/${post.id}`,
+            mapUrl: `https://youmap.com/map/${post.mapId}`,
+          })),
+        };
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+          throw new Error(
+            "Authentication failed. Please check your credentials."
+          );
+        } else if (error.response?.status === 400) {
+          const validationDetails = parseValidationErrors(error.response);
+          throw new Error(`Validation error: ${validationDetails}`);
+        } else {
+          throw new Error(`Failed to search posts by name: ${error.message}`);
+        }
+      }
+    },
+  },
+  {
     name: "create_action",
     description:
       "Create a new action (post template) that defines the structure for posts. Actions serve as blueprints that specify what fields and content types posts can contain.",
@@ -643,7 +730,7 @@ export const TOOLS: MCPTool[] = [
         emoji: {
           type: "string",
           description:
-            "Emoji that represents this action (default: ':speech_balloon:')",
+            "Emoji that represents this action (default: ':speech_balloon:'). Use the get_emoji_shortnames tool to find available emoji codes. Pass the emoji in shortcode format, e.g., ':tree:', ':camera:', ':fork_and_knife:'. Do not send the actual emoji character, just the shortcode string that you get from the tool.",
           default: ":speech_balloon:",
         },
         mapId: {
@@ -904,7 +991,7 @@ export const TOOLS: MCPTool[] = [
                       emoji: {
                         type: "string",
                         description:
-                          "Not required. Emoji in unicode format, e.g :smile:",
+                          "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
                       },
                     },
                   },
@@ -1093,7 +1180,8 @@ export const TOOLS: MCPTool[] = [
         },
         emoji: {
           type: "string",
-          description: "New emoji that represents this action",
+          description:
+            "New emoji that represents this action. Use the get_emoji_shortnames tool to find available emoji codes.",
         },
         borderColor: {
           type: "string",
@@ -1349,7 +1437,7 @@ export const TOOLS: MCPTool[] = [
                       emoji: {
                         type: "string",
                         description:
-                          "Not required. Emoji in unicode format, e.g :smile:",
+                          "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
                       },
                     },
                   },
@@ -2494,7 +2582,7 @@ export const TOOLS: MCPTool[] = [
         }
 
         // Make API request to delete the post
-        const response = await client.delete(`/posts/${args.postId}`);
+        const response = await client.delete(`/post/${args.postId}`);
 
         return {
           success: true,
@@ -2654,6 +2742,120 @@ export const TOOLS: MCPTool[] = [
               );
             case 404:
               throw new Error(`Map with ID ${args.mapId} not found.`);
+            case 400:
+              const validationDetails = parseValidationErrors(error.response);
+              throw new Error(`Validation error: ${validationDetails}`);
+            default:
+              throw new Error(`Server error (${status}): ${message}`);
+          }
+        }
+
+        throw new Error(`Network error: ${error.message}`);
+      }
+    },
+  },
+  {
+    name: "get_emoji_shortnames",
+    description:
+      "Get the complete list of available emoji shortnames that can be used in the emoji field when creating posts. These are the valid emoji codes that YouMap supports for posts.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        filter: {
+          type: "string",
+          description:
+            "Optional filter to search for specific emojis by name (e.g., 'heart', 'smile', 'fire')",
+        },
+        limit: {
+          type: "number",
+          description:
+            "Optional limit on number of results to return (default: all emojis)",
+          minimum: 1,
+        },
+      },
+    },
+    handler: async (args: any) => {
+      try {
+        let filteredEmojis = EMOJI_SHORTNAMES;
+
+        // Apply filter if provided
+        if (args.filter) {
+          const filterLower = args.filter.toLowerCase();
+          filteredEmojis = EMOJI_SHORTNAMES.filter((emoji) =>
+            emoji.toLowerCase().includes(filterLower)
+          );
+        }
+
+        // Apply limit if provided
+        if (args.limit && args.limit > 0) {
+          filteredEmojis = filteredEmojis.slice(0, args.limit);
+        }
+
+        return {
+          success: true,
+          message: `Found ${filteredEmojis.length} emoji shortnames${
+            args.filter ? ` matching "${args.filter}"` : ""
+          }`,
+          data: {
+            emojis: filteredEmojis,
+            total_count: filteredEmojis.length,
+            total_available: EMOJI_SHORTNAMES.length,
+            usage_note:
+              "Use these shortnames in the 'emoji' field when creating posts with YouMap tools",
+            examples: [":heart:", ":smile:", ":fire:", ":star:", ":thumbsup:"],
+          },
+        };
+      } catch (error: any) {
+        throw new Error(`Error retrieving emoji shortnames: ${error.message}`);
+      }
+    },
+  },
+  {
+    name: "admin_delete_post",
+    description:
+      "Admin-only tool to delete any post permanently, regardless of ownership. This action cannot be undone. Requires admin privileges.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        postId: {
+          type: "number",
+          description: "ID of the post to delete",
+        },
+      },
+      required: ["postId"],
+    },
+    handler: async (args: any, client: YouMapClient) => {
+      try {
+        // Validate input
+        if (!args.postId || typeof args.postId !== "number") {
+          throw new Error("Post ID is required and must be a number");
+        }
+
+        // Make API request to admin delete endpoint
+        const response = await client.delete(`/post/admin/${args.postId}`);
+
+        return {
+          success: true,
+          message: `Post with ID ${args.postId} has been deleted successfully by admin`,
+          postId: args.postId,
+        };
+      } catch (error: any) {
+        // Handle specific HTTP error responses
+        if (error.response) {
+          const status = error.response.status;
+          const message = error.response.data?.message || error.message;
+
+          switch (status) {
+            case 401:
+              throw new Error(
+                "Authentication required. Please check your access token."
+              );
+            case 403:
+              throw new Error(
+                "Access denied. Admin privileges required to delete posts."
+              );
+            case 404:
+              throw new Error(`Post with ID ${args.postId} not found.`);
             case 400:
               const validationDetails = parseValidationErrors(error.response);
               throw new Error(`Validation error: ${validationDetails}`);
