@@ -2,6 +2,9 @@ export interface YouMapClientConfig {
     baseURL: string;
     clientId?: string;
     clientSecret?: string;
+    serpApiKey?: string;
+    unsplashAccessKey?: string;
+    bflApiKey?: string;
 }
 export declare class YouMapClient {
     private client;
@@ -18,5 +21,8 @@ export declare class YouMapClient {
     put(path: string, data?: any): Promise<any>;
     delete(path: string): Promise<any>;
     patch(path: string, data?: any): Promise<any>;
+    get serpApiKey(): string | undefined;
+    get unsplashAccessKey(): string | undefined;
+    get bflApiKey(): string | undefined;
 }
 //# sourceMappingURL=client.d.ts.map

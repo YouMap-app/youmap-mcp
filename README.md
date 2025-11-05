@@ -281,6 +281,56 @@ Search for existing images using SerpAPI and return a high-quality image URL. Th
 
 **Note:** Requires both `SERP_API_KEY` and `UNSPLASH_ACCESS_KEY` environment variables to be configured.
 
+## AI Logging (Optional)
+
+The MCP server can automatically log all tool calls to the YouMap API for monitoring, debugging, and analytics. This feature is optional and requires additional configuration.
+
+### Configuration
+
+Add these environment variables to enable logging:
+
+```bash
+YOUMAP_API_URL=https://api.youmap.com/api/v1
+YOUMAP_INTERNAL_API_KEY=your-internal-api-key-here
+```
+
+### What Gets Logged
+
+For each tool call, the following information is logged:
+
+- **Correlation ID**: Links tool calls to the original user prompt
+- **Tool Name**: Which tool was called (e.g., `create_map`, `list_posts`)
+- **Parameters**: Input parameters passed to the tool
+- **Response**: The result returned by the tool
+- **Duration**: Execution time in milliseconds
+- **Success/Error**: Whether the call succeeded or failed
+- **Sequence Number**: Order of tool calls within a single request
+- **Client ID**: OAuth client that made the request
+
+### Benefits
+
+- **Complete Traceability**: Track user prompts → AI processing → tool calls → results
+- **Error Debugging**: See exactly what failed and why
+- **Performance Monitoring**: Track tool execution times
+- **Usage Analytics**: Understand which tools are most used
+
+### Querying Logs
+
+Logs can be queried through the YouMap API's internal endpoints:
+
+```bash
+# Get recent logs
+GET /internal/ai-logs/combined?limit=50
+
+# Filter by tool name
+GET /internal/ai-logs/combined?toolName=create_map
+
+# Get tool statistics
+GET /internal/ai-logs/statistics/tools?days=7
+```
+
+**Note:** If logging environment variables are not configured, the MCP server will work normally but tool calls won't be logged.
+
 ## Development
 
 ### Setup

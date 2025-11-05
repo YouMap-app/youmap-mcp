@@ -120,5 +120,15 @@ export class YouMapClient {
         const response = await this.client.patch(path, data);
         return response.data;
     }
+    // Getter methods for API keys
+    get serpApiKey() {
+        return this.config.serpApiKey;
+    }
+    get unsplashAccessKey() {
+        return this.config.unsplashAccessKey;
+    }
+    get bflApiKey() {
+        return this.config.bflApiKey;
+    }
 }
 //# sourceMappingURL=client.js.map

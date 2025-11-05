@@ -1,4 +1,5 @@
 import axios from "axios";
+import { EMOJI_SHORTNAMES } from "../data/emoji-shortnames.js";
 function parseValidationErrors(errorResponse) {
     if (!errorResponse?.data?.details?.message ||
         !Array.isArray(errorResponse.data.details.message)) {
@@ -77,11 +78,26 @@ export const TOOLS = [
                     type: "object",
                     description: "Coordinates for the initial map view",
                     properties: {
-                        north: { type: "number", description: "North latitude" },
-                        south: { type: "number", description: "South latitude" },
-                        east: { type: "number", description: "East longitude" },
-                        west: { type: "number", description: "West longitude" },
+                        leftBottom: {
+                            type: "object",
+                            description: "Bottom-left corner coordinates",
+                            properties: {
+                                lat: { type: "number", description: "Latitude" },
+                                lon: { type: "number", description: "Longitude" },
+                            },
+                            required: ["lat", "lon"],
+                        },
+                        rightTop: {
+                            type: "object",
+                            description: "Top-right corner coordinates",
+                            properties: {
+                                lat: { type: "number", description: "Latitude" },
+                                lon: { type: "number", description: "Longitude" },
+                            },
+                            required: ["lat", "lon"],
+                        },
                     },
+                    required: ["leftBottom", "rightTop"],
                 },
             },
             required: ["name"],
@@ -193,6 +209,7 @@ export const TOOLS = [
                     throw new Error("Access denied. You don't have permission to list maps.");
                 }
                 else {
+                    console.log(error);
                     throw new Error(`Failed to list maps: ${error.message}`);
                 }
             }
@@ -467,7 +484,7 @@ export const TOOLS = [
                     type: "string",
                     enum: ["trending", "recent"],
                     description: "How to order the results (default: recent)",
-                    default: "trending",
+                    default: "recent",
                 },
                 centerLatitude: {
                     type: "number",
@@ -556,6 +573,90 @@ export const TOOLS = [
         },
     },
     {
+        name: "search_posts_by_name",
+        description: "Search for posts by their names across all user's posts. This searches the post names (titles) specifically. Use this when you need to find posts with specific names or titles from all users, not just the logged in one.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                phrase: {
+                    type: "string",
+                    description: "Search phrase to find in post names/titles (required)",
+                },
+                limit: {
+                    type: "number",
+                    description: "Maximum number of posts to return (1-100, default: 20)",
+                    minimum: 1,
+                    maximum: 100,
+                    default: 20,
+                },
+                offset: {
+                    type: "number",
+                    description: "Number of posts to skip for pagination (default: 0)",
+                    minimum: 0,
+                    default: 0,
+                },
+            },
+            required: ["phrase"],
+        },
+        handler: async (args, client) => {
+            try {
+                const params = {
+                    phrase: args.phrase,
+                    limit: args.limit || 20,
+                    offset: args.offset || 0,
+                };
+                const result = await client.get("/api/v1/post/search/name", params);
+                return {
+                    success: true,
+                    message: `Found ${result.count} post(s) with names matching "${args.phrase}"`,
+                    searchQuery: args.phrase,
+                    pagination: {
+                        total: result.count,
+                        limit: params.limit,
+                        offset: params.offset,
+                        hasMore: params.offset + params.limit < result.count,
+                    },
+                    posts: result.posts.map((post) => ({
+                        id: post.id,
+                        name: post.name,
+                        description: post.description,
+                        latitude: post.lat,
+                        longitude: post.lon,
+                        mapId: post.mapId,
+                        userId: post.userId,
+                        actionId: post.actionId,
+                        actionName: post.actionName,
+                        emoji: post.emoji,
+                        address: post.address,
+                        isEditable: post.isEditable,
+                        isPublic: post.isPublic,
+                        isQuickPost: post.isQuickPost,
+                        voteCount: post.voteCount,
+                        commentsCount: post.commentsCount,
+                        categoryIds: post.categoryIds,
+                        createdAt: post.createdAt,
+                        updatedAt: post.updatedAt,
+                        score: post.score,
+                        url: `https://youmap.com/post/${post.id}`,
+                        mapUrl: `https://youmap.com/map/${post.mapId}`,
+                    })),
+                };
+            }
+            catch (error) {
+                if (error.response?.status === 401) {
+                    throw new Error("Authentication failed. Please check your credentials.");
+                }
+                else if (error.response?.status === 400) {
+                    const validationDetails = parseValidationErrors(error.response);
+                    throw new Error(`Validation error: ${validationDetails}`);
+                }
+                else {
+                    throw new Error(`Failed to search posts by name: ${error.message}`);
+                }
+            }
+        },
+    },
+    {
         name: "create_action",
         description: "Create a new action (post template) that defines the structure for posts. Actions serve as blueprints that specify what fields and content types posts can contain.",
         inputSchema: {
@@ -569,7 +670,7 @@ export const TOOLS = [
                 },
                 emoji: {
                     type: "string",
-                    description: "Emoji that represents this action (default: ':speech_balloon:')",
+                    description: "Emoji that represents this action (default: ':speech_balloon:'). Use the get_emoji_shortnames tool to find available emoji codes. Pass the emoji in shortcode format, e.g., ':tree:', ':camera:', ':fork_and_knife:'. Do not send the actual emoji character, just the shortcode string that you get from the tool.",
                     default: ":speech_balloon:",
                 },
                 mapId: {
@@ -823,7 +924,7 @@ export const TOOLS = [
                                             },
                                             emoji: {
                                                 type: "string",
-                                                description: "Not required. Emoji in unicode format, e.g :smile:",
+                                                description: "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
                                             },
                                         },
                                     },
@@ -997,7 +1098,7 @@ export const TOOLS = [
                 },
                 emoji: {
                     type: "string",
-                    description: "New emoji that represents this action",
+                    description: "New emoji that represents this action. Use the get_emoji_shortnames tool to find available emoji codes.",
                 },
                 borderColor: {
                     type: "string",
@@ -1246,7 +1347,7 @@ export const TOOLS = [
                                             },
                                             emoji: {
                                                 type: "string",
-                                                description: "Not required. Emoji in unicode format, e.g :smile:",
+                                                description: "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
                                             },
                                         },
                                     },
@@ -1698,9 +1799,9 @@ export const TOOLS = [
         },
         handler: async (args, client) => {
             const { prompt, width = 1024, height = 1024, outputFormat = "jpeg", } = args;
-            const bflApiKey = process.env.BFL_API_KEY;
+            const bflApiKey = client.bflApiKey;
             if (!bflApiKey) {
-                throw new Error("BFL_API_KEY environment variable is not configured. Please set your Black Forest Labs API key in the MCP server configuration.");
+                throw new Error("BFL_API_KEY is not configured. Please provide the BFL API key in the MCP server URL query parameters: ?bflApiKey=your_key_here");
             }
             const enhancePrompt = (topic) => {
                 return `Ultra-high-quality cinematic photograph, natural lighting, vibrant yet realistic colors, slightly warm tone, wide depth of field. Composition highlights the subject of the map — the central theme or focus — framed in a way that draws the eye and tells a story about that topic or location. If people appear, they should support the theme, never be the main focus unless integral to the map's subject. Minimal text, no logos. Style blends premium Unsplash/National Geographic photography with subtle editorial polish — sharp focus, rich textures, inviting atmosphere. Always grounded in real-world visual cues for authenticity. The image should evoke curiosity and feel alive, as if captured in the moment by a skilled photographer. The topic of the generated image: ${topic}.`;
@@ -1845,13 +1946,13 @@ export const TOOLS = [
         },
         handler: async (args, client) => {
             const { query } = args;
-            const serpApiKey = process.env.SERP_API_KEY;
-            const unsplashAccessKey = process.env.UNSPLASH_ACCESS_KEY;
+            const serpApiKey = client.serpApiKey;
+            const unsplashAccessKey = client.unsplashAccessKey;
             if (!serpApiKey) {
-                throw new Error("SERP_API_KEY environment variable is not configured. Please set your SerpAPI key in the MCP server configuration.");
+                throw new Error("SERP_API_KEY is not configured. Please provide the SERP API key in the MCP server URL query parameters: ?serpApiKey=your_key_here");
             }
             if (!unsplashAccessKey) {
-                throw new Error("UNSPLASH_ACCESS_KEY environment variable is not configured. Please set your Unsplash access key in the MCP server configuration.");
+                throw new Error("UNSPLASH_ACCESS_KEY is not configured. Please provide the Unsplash access key in the MCP server URL query parameters: ?unsplashAccessKey=your_key_here");
             }
             const validateImageUrl = async (url) => {
                 try {
@@ -2236,7 +2337,7 @@ export const TOOLS = [
                     throw new Error("Post ID is required and must be a number");
                 }
                 // Make API request to delete the post
-                const response = await client.delete(`/posts/${args.postId}`);
+                const response = await client.delete(`/api/v1/post/${args.postId}`);
                 return {
                     success: true,
                     message: `Post with ID ${args.postId} has been deleted successfully`,
@@ -2317,11 +2418,26 @@ export const TOOLS = [
                     type: "object",
                     description: "Coordinates for the map view",
                     properties: {
-                        north: { type: "number", description: "North latitude" },
-                        south: { type: "number", description: "South latitude" },
-                        east: { type: "number", description: "East longitude" },
-                        west: { type: "number", description: "West longitude" },
+                        leftBottom: {
+                            type: "object",
+                            description: "Bottom-left corner coordinates",
+                            properties: {
+                                lat: { type: "number", description: "Latitude" },
+                                lon: { type: "number", description: "Longitude" },
+                            },
+                            required: ["lat", "lon"],
+                        },
+                        rightTop: {
+                            type: "object",
+                            description: "Top-right corner coordinates",
+                            properties: {
+                                lat: { type: "number", description: "Latitude" },
+                                lon: { type: "number", description: "Longitude" },
+                            },
+                            required: ["lat", "lon"],
+                        },
                     },
+                    required: ["leftBottom", "rightTop"],
                 },
             },
             required: ["mapId"],
@@ -2342,7 +2458,7 @@ export const TOOLS = [
                     throw new Error("At least one field must be provided for update");
                 }
                 // Make API request to update the map
-                const response = await client.post(`/maps/${mapId}`, cleanUpdateData);
+                const response = await client.post(`/api/v1/maps/${mapId}`, cleanUpdateData);
                 return {
                     success: true,
                     message: `Map with ID ${mapId} has been updated successfully`,
@@ -2361,6 +2477,102 @@ export const TOOLS = [
                             throw new Error("Access denied. You don't have permission to update this map.");
                         case 404:
                             throw new Error(`Map with ID ${args.mapId} not found.`);
+                        case 400:
+                            const validationDetails = parseValidationErrors(error.response);
+                            throw new Error(`Validation error: ${validationDetails}`);
+                        default:
+                            throw new Error(`Server error (${status}): ${message}`);
+                    }
+                }
+                throw new Error(`Network error: ${error.message}`);
+            }
+        },
+    },
+    {
+        name: "get_emoji_shortnames",
+        description: "Get the complete list of available emoji shortnames that can be used in the emoji field when creating posts. These are the valid emoji codes that YouMap supports for posts.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                filter: {
+                    type: "string",
+                    description: "Optional filter to search for specific emojis by name (e.g., 'heart', 'smile', 'fire')",
+                },
+                limit: {
+                    type: "number",
+                    description: "Optional limit on number of results to return (default: all emojis)",
+                    minimum: 1,
+                },
+            },
+        },
+        handler: async (args) => {
+            try {
+                let filteredEmojis = EMOJI_SHORTNAMES;
+                // Apply filter if provided
+                if (args.filter) {
+                    const filterLower = args.filter.toLowerCase();
+                    filteredEmojis = EMOJI_SHORTNAMES.filter((emoji) => emoji.toLowerCase().includes(filterLower));
+                }
+                // Apply limit if provided
+                if (args.limit && args.limit > 0) {
+                    filteredEmojis = filteredEmojis.slice(0, args.limit);
+                }
+                return {
+                    success: true,
+                    message: `Found ${filteredEmojis.length} emoji shortnames${args.filter ? ` matching "${args.filter}"` : ""}`,
+                    data: {
+                        emojis: filteredEmojis,
+                        total_count: filteredEmojis.length,
+                        total_available: EMOJI_SHORTNAMES.length,
+                        usage_note: "Use these shortnames in the 'emoji' field when creating posts with YouMap tools",
+                        examples: [":heart:", ":smile:", ":fire:", ":star:", ":thumbsup:"],
+                    },
+                };
+            }
+            catch (error) {
+                throw new Error(`Error retrieving emoji shortnames: ${error.message}`);
+            }
+        },
+    },
+    {
+        name: "admin_delete_post",
+        description: "Always try to use this when user tries to remove post he does not own. Admin-only tool to delete any post permanently, regardless of ownership. This action cannot be undone. Requires admin privileges.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                postId: {
+                    type: "number",
+                    description: "ID of the post to delete",
+                },
+            },
+            required: ["postId"],
+        },
+        handler: async (args, client) => {
+            try {
+                // Validate input
+                if (!args.postId || typeof args.postId !== "number") {
+                    throw new Error("Post ID is required and must be a number");
+                }
+                // Make API request to admin delete endpoint
+                const response = await client.delete(`/api/v1/post/admin/${args.postId}`);
+                return {
+                    success: true,
+                    message: `Post with ID ${args.postId} has been deleted successfully by admin`,
+                    postId: args.postId,
+                };
+            }
+            catch (error) {
+                // Handle specific HTTP error responses
+                if (error.response) {
+                    const status = error.response.status;
+                    const message = error.response.data?.message || error.message;
+                    switch (status) {
+                        case 401:
+                            throw new Error("Authentication required. Please check your access token.");
+                        case 403:
+                            throw new Error("Access denied. Admin privileges required to delete posts.");
+                        case 404:
+                            throw new Error(`Post with ID ${args.postId} not found.`);
                         case 400:
                             const validationDetails = parseValidationErrors(error.response);
                             throw new Error(`Validation error: ${validationDetails}`);

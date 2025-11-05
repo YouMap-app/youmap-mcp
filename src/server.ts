@@ -10,6 +10,8 @@ import { YouMapClient } from "./client.js";
 import { TOOLS } from "./tools/index.js";
 import express from "express";
 import cors from "cors";
+import { v4 as uuidv4 } from "uuid";
+import { logToolCallToAPI, extractCorrelationId } from "./utils/logging.js";
 
 class YouMapMCPServer {
   private server: Server;
@@ -347,8 +349,60 @@ class YouMapMCPServer {
               });
             }
 
-            // Execute tool with the authenticated YouMap client
-            const result = await tool.handler(args || {}, youmapClient);
+            // Extract correlation ID from headers or generate new one
+            const correlationId = extractCorrelationId(req.headers) || uuidv4();
+
+            // Get sequence number from header or default to 1
+            const sequenceNumber = parseInt(
+              (req.headers["x-sequence-number"] as string) || "1"
+            );
+
+            console.log(
+              `Executing tool: ${name} (correlation: ${correlationId}, seq: ${sequenceNumber})`
+            );
+
+            // Execute tool and track timing
+            const startTime = Date.now();
+            let toolResult: any;
+            let toolError: any = null;
+            let success = false;
+
+            try {
+              toolResult = await tool.handler(args || {}, youmapClient);
+              success = true;
+            } catch (error) {
+              toolError = error;
+              success = false;
+              throw error; // Re-throw to be handled by outer catch
+            } finally {
+              const duration = Date.now() - startTime;
+
+              // Log to API (fire and forget - don't await)
+              logToolCallToAPI({
+                correlationId,
+                toolName: name,
+                parameters: args || {},
+                response: success ? toolResult : null,
+                error: toolError
+                  ? {
+                      message:
+                        toolError instanceof Error
+                          ? toolError.message
+                          : String(toolError),
+                      stack:
+                        toolError instanceof Error
+                          ? toolError.stack
+                          : undefined,
+                    }
+                  : null,
+                duration,
+                success,
+                sequenceNumber,
+                clientId: clientId,
+              }).catch((logError) => {
+                console.error("Logging error:", logError);
+              });
+            }
 
             return res.json({
               jsonrpc: "2.0",
@@ -357,9 +411,9 @@ class YouMapMCPServer {
                   {
                     type: "text",
                     text:
-                      typeof result === "string"
-                        ? result
-                        : JSON.stringify(result, null, 2),
+                      typeof toolResult === "string"
+                        ? toolResult
+                        : JSON.stringify(toolResult, null, 2),
                   },
                 ],
               },
