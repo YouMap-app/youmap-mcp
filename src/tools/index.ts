@@ -1880,7 +1880,7 @@ export const TOOLS: MCPTool[] = [
   {
     name: "generate_image",
     description:
-      "Generate an AI image using FLUX PRO 1.1 model based on a text prompt. This tool directly integrates with the Black Forest Labs API to create high-quality, cinematic-style images with automatic prompt enhancement. Requires BFL_API_KEY environment variable to be configured.",
+      "Generate an AI image using FLUX PRO 1.1 model based on a text prompt. This tool directly integrates with the Black Forest Labs API to create high-quality, cinematic-style images with automatic prompt enhancement. Requires BFL_API_KEY environment variable to be configured. Should be used as fallback only, the main recommended tool for images is search_image",
     inputSchema: {
       type: "object",
       properties: {
@@ -2081,7 +2081,7 @@ export const TOOLS: MCPTool[] = [
   {
     name: "search_image",
     description:
-      "Search for existing images using SerpAPI and return a high-quality image URL. This tool searches Google Images, filters results for quality, validates accessibility, and falls back to Unsplash if needed. Requires SERP_API_KEY and UNSPLASH_ACCESS_KEY environment variables to be configured.",
+      "Search for existing images using SerpAPI and return a high-quality image URL. Main tool for images within the Youmap ecosystem. This tool searches Google Images, filters results for quality, validates accessibility, and falls back to Unsplash if needed. Requires SERP_API_KEY and UNSPLASH_ACCESS_KEY environment variables to be configured.",
     inputSchema: {
       type: "object",
       properties: {
