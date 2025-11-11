@@ -228,7 +228,7 @@ export const TOOLS: MCPTool[] = [
             categoryIds: map.categoryIds,
             createdAt: map.createdAt,
             updatedAt: map.updatedAt,
-            url: `https://youmap.com/map/${map.id}`,
+            url: `https://youmap.com/app/${map.slug}`,
           })),
         };
       } catch (error: any) {
@@ -476,8 +476,8 @@ export const TOOLS: MCPTool[] = [
             isQuickPost: result.isQuickPost,
             createdAt: result.createdAt,
             updatedAt: result.updatedAt,
-            url: `https://youmap.com/post/${result.id}`,
-            mapUrl: `https://youmap.com/map/${result.mapId}`,
+            url: `https://youmap.com/app/${result.mapSlug}/posts/${result.slug}`,
+            mapUrl: `https://youmap.com/app/${result.mapSlug}`,
           },
         };
       } catch (error: any) {
@@ -601,12 +601,12 @@ export const TOOLS: MCPTool[] = [
             createdAt: post.createdAt,
             updatedAt: post.updatedAt,
             score: post.score,
-            url: `https://youmap.com/post/${post.id}`,
-            mapUrl: `https://youmap.com/map/${post.mapId}`,
+            url: `https://youmap.com/app/${post.mapSlug}/posts/${post.slug}`,
+            mapUrl: `https://youmap.com/app/${post.mapSlug}`,
           })),
           mapInfo: {
             id: args.mapId,
-            url: `https://youmap.com/map/${args.mapId}`,
+            url: `https://youmap.com/app/${args.mapSlug}`,
           },
         };
       } catch (error: any) {
@@ -696,8 +696,8 @@ export const TOOLS: MCPTool[] = [
             createdAt: post.createdAt,
             updatedAt: post.updatedAt,
             score: post.score,
-            url: `https://youmap.com/post/${post.id}`,
-            mapUrl: `https://youmap.com/map/${post.mapId}`,
+            url: `https://youmap.com/app/${post.mapSlug}/posts/${post.slug}`,
+            mapUrl: `https://youmap.com/app/${post.mapSlug}`,
           })),
         };
       } catch (error: any) {
@@ -1034,7 +1034,7 @@ export const TOOLS: MCPTool[] = [
             updatedAt: result.updatedAt,
             fields: result.fields,
             url: `https://youmap.com/action/${result.id}`,
-            mapUrl: `https://youmap.com/map/${result.mapId}`,
+            mapUrl: `https://youmap.com/app/${result.mapSlug}`,
           },
         };
       } catch (error: any) {
@@ -1130,11 +1130,11 @@ export const TOOLS: MCPTool[] = [
             fields: action.fields,
             version: action.latestVersion,
             url: `https://youmap.com/action/${action.id}`,
-            mapUrl: `https://youmap.com/map/${action.mapId}`,
+            mapUrl: `https://youmap.com/app/${action.mapSlug}`,
           })),
           mapInfo: {
             id: args.mapId,
-            url: `https://youmap.com/map/${args.mapId}`,
+            url: `https://youmap.com/app/${args.mapSlug}`,
           },
         };
       } catch (error: any) {
@@ -1487,7 +1487,7 @@ export const TOOLS: MCPTool[] = [
             isPublished: result.isPublished,
             publishedAt: result.publishedAt,
             url: `https://youmap.com/action/${result.id}`,
-            mapUrl: `https://youmap.com/map/${result.mapId}`,
+            mapUrl: `https://youmap.com/app/${result.mapSlug}`,
           },
         };
       } catch (error: any) {
