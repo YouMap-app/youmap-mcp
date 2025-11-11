@@ -156,7 +156,7 @@ export const TOOLS: MCPTool[] = [
             isReadonly: result.isReadonly,
             categoryIds: result.categoryIds,
             createdAt: result.createdAt,
-            url: `https://youmap.com/map/${result.id}`,
+            url: `https://youmap.com/app/${result.slug}`,
           },
         };
       } catch (error: any) {
