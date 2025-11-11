@@ -72,7 +72,7 @@ export const TOOLS: MCPTool[] = [
           enum: ["public", "inviteOnly", "private"],
           description:
             "Access level: public (everyone can access), inviteOnly (invite specific users), private (only you)",
-          default: "public",
+          default: "private",
         },
         coverImageFromUrl: {
           type: "string",
