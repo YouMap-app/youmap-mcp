@@ -1848,7 +1848,7 @@ export const TOOLS: MCPTool[] = [
         );
 
         const response = await client.post(
-          `/api/v1/post/${postId}`,
+          `/api/v2/post/${postId}`,
           cleanUpdateData
         );
         return {
