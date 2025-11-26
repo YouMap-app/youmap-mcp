@@ -188,8 +188,6 @@ class YouMapMCPServer {
       next: express.NextFunction
     ) => {
       // Skip header check for API key endpoint - it's more flexible
-      console.log("xddddd");
-      console.log(req.path);
       if (req.path === "/v1/mcp") {
         return next();
       }
