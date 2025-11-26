@@ -34,8 +34,8 @@ class YouMapMCPServer {
     );
 
     this.youmapClient = new YouMapClient({
-      baseURL:
-        process.env.YOUMAP_BASE_URL || "https://developer.youmap.com/api/v1/",
+      baseURL: process.env.YOUMAP_BASE_URL || "https://developer.youmap.com",
+      apiKey: process.env.YOUMAP_API_KEY,
       clientId: process.env.YOUMAP_CLIENT_ID,
       clientSecret: process.env.YOUMAP_CLIENT_SECRET,
     });
@@ -181,15 +181,22 @@ class YouMapMCPServer {
       }
     });
 
-    // Middleware to check Accept headers for JSON-RPC MCP endpoints
+    // Middleware to check Accept headers for JSON-RPC MCP endpoints (legacy OAuth only)
     const checkMCPHeaders = (
       req: express.Request,
       res: express.Response,
       next: express.NextFunction
     ) => {
+      // Skip header check for API key endpoint - it's more flexible
+      console.log("xddddd");
+      console.log(req.path);
+      if (req.path === "/v1/mcp") {
+        return next();
+      }
+
       const acceptHeader = req.get("Accept") || "";
 
-      // Check if it's a JSON-RPC MCP request
+      // Check if it's a JSON-RPC MCP request (legacy OAuth endpoint)
       if (req.path.includes("/mcp") && req.method === "POST") {
         if (
           !acceptHeader.includes("application/json") ||
@@ -212,31 +219,269 @@ class YouMapMCPServer {
     this.app.use(checkMCPHeaders);
 
     // Helper function to create YouMap client with credentials and API keys
-    const createYouMapClient = (
-      clientId: string,
-      clientSecret?: string,
-      serpApiKey?: string,
-      unsplashAccessKey?: string,
-      bflApiKey?: string
-    ): YouMapClient => {
+    const createYouMapClient = (options: {
+      apiKey?: string;
+      clientId?: string;
+      clientSecret?: string;
+      serpApiKey?: string;
+      unsplashAccessKey?: string;
+      bflApiKey?: string;
+    }): YouMapClient => {
       return new YouMapClient({
         baseURL: process.env.YOUMAP_BASE_URL || "https://developer.youmap.com",
-        clientId,
-        clientSecret,
-        serpApiKey,
-        unsplashAccessKey,
-        bflApiKey,
+        apiKey: options.apiKey,
+        clientId: options.clientId,
+        clientSecret: options.clientSecret,
+        serpApiKey: options.serpApiKey,
+        unsplashAccessKey: options.unsplashAccessKey,
+        bflApiKey: options.bflApiKey,
       });
     };
 
-    // JSON-RPC MCP endpoint - AgentKit compatible with API keys support
+    // JSON-RPC MCP endpoint with API key authentication
+    // URL format: /v1/mcp with X-API-Key header or apiKey query param
+    this.app.post("/v1/mcp", async (req, res) => {
+      const apiKey = (req.get("X-API-Key") || req.query.apiKey) as
+        | string
+        | undefined;
+      const { serpApiKey, unsplashAccessKey, bflApiKey } = req.query;
+      const { jsonrpc, method, params, id } = req.body;
+
+      console.log("=== MCP JSON-RPC REQUEST (API Key) ===");
+      console.log("Has API Key:", !!apiKey);
+      console.log("Method:", method);
+      console.log("Has SERP API Key:", !!serpApiKey);
+      console.log("Has Unsplash Key:", !!unsplashAccessKey);
+      console.log("Has BFL API Key:", !!bflApiKey);
+      console.log("Params:", params);
+      console.log("JSON-RPC Version:", jsonrpc);
+      console.log("Request ID:", id);
+      console.log("=======================================");
+
+      // Validate JSON-RPC
+      if (jsonrpc !== "2.0") {
+        return res.json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32600,
+            message: "Invalid Request: jsonrpc must be 2.0",
+          },
+          id: id,
+        });
+      }
+
+      // Validate API key
+      if (!apiKey) {
+        return res.json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32001,
+            message:
+              "Unauthorized: Missing API key. Provide X-API-Key header or apiKey query parameter.",
+          },
+          id: id,
+        });
+      }
+
+      try {
+        // Create YouMap client with API key
+        const youmapClient = createYouMapClient({
+          apiKey,
+          serpApiKey: serpApiKey as string,
+          unsplashAccessKey: unsplashAccessKey as string,
+          bflApiKey: bflApiKey as string,
+        });
+
+        switch (method) {
+          case "tools/list":
+          case "list":
+          case "list_tools":
+          case "initialize":
+          case "list_actions":
+            // Handle initialize method for MCP protocol
+            if (method === "initialize") {
+              return res.json({
+                jsonrpc: "2.0",
+                result: {
+                  protocolVersion: "2024-11-05",
+                  capabilities: {
+                    tools: {},
+                  },
+                  serverInfo: {
+                    name: "youmap-mcp",
+                    version: "1.0.0",
+                  },
+                },
+                id: id,
+              });
+            }
+
+            const toolsList = TOOLS.map((tool) => ({
+              name: tool.name,
+              description: tool.description,
+              inputSchema: tool.inputSchema,
+            }));
+
+            return res.json({
+              jsonrpc: "2.0",
+              result: {
+                tools: toolsList,
+              },
+              id: id,
+            });
+
+          case "tools/call":
+          case "call_tool":
+          case "call_action":
+            const { name, arguments: args } = params || {};
+
+            if (!name) {
+              return res.json({
+                jsonrpc: "2.0",
+                error: {
+                  code: -32602,
+                  message: "Invalid params: tool name is required",
+                },
+                id: id,
+              });
+            }
+
+            const tool = TOOLS.find((t) => t.name === name);
+
+            if (!tool) {
+              return res.json({
+                jsonrpc: "2.0",
+                error: {
+                  code: -32601,
+                  message: `Method not found: ${name}`,
+                },
+                id: id,
+              });
+            }
+
+            // Extract correlation ID from headers or generate new one
+            const correlationId = extractCorrelationId(req.headers) || uuidv4();
+
+            // Get sequence number from header or default to 1
+            const sequenceNumber = parseInt(
+              (req.headers["x-sequence-number"] as string) || "1"
+            );
+
+            console.log(
+              `Executing tool: ${name} (correlation: ${correlationId}, seq: ${sequenceNumber})`
+            );
+
+            // Execute tool and track timing
+            const startTime = Date.now();
+            let toolResult: any;
+            let toolError: any = null;
+            let success = false;
+
+            try {
+              toolResult = await tool.handler(args || {}, youmapClient);
+              success = true;
+            } catch (error) {
+              toolError = error;
+              success = false;
+              throw error; // Re-throw to be handled by outer catch
+            } finally {
+              const duration = Date.now() - startTime;
+
+              // Log to API (fire and forget - don't await)
+              logToolCallToAPI({
+                correlationId,
+                toolName: name,
+                parameters: args || {},
+                response: success ? toolResult : null,
+                error: toolError
+                  ? {
+                      message:
+                        toolError instanceof Error
+                          ? toolError.message
+                          : String(toolError),
+                      stack:
+                        toolError instanceof Error
+                          ? toolError.stack
+                          : undefined,
+                    }
+                  : null,
+                duration,
+                success,
+                sequenceNumber,
+                clientId: `apikey:${apiKey.substring(0, 7)}...`,
+              }).catch((logError) => {
+                console.error("Logging error:", logError);
+              });
+            }
+
+            return res.json({
+              jsonrpc: "2.0",
+              result: {
+                content: [
+                  {
+                    type: "text",
+                    text:
+                      typeof toolResult === "string"
+                        ? toolResult
+                        : JSON.stringify(toolResult, null, 2),
+                  },
+                ],
+              },
+              id: id,
+            });
+
+          default:
+            return res.json({
+              jsonrpc: "2.0",
+              error: {
+                code: -32601,
+                message: `Method not found: ${method}`,
+              },
+              id: id,
+            });
+        }
+      } catch (error) {
+        console.error("MCP JSON-RPC Error:", error);
+
+        // Handle authentication errors specifically
+        if (
+          error instanceof Error &&
+          (error.message.includes("401") ||
+            error.message.includes("Unauthorized") ||
+            error.message.includes("Invalid credentials") ||
+            error.message.includes("Invalid API key"))
+        ) {
+          return res.json({
+            jsonrpc: "2.0",
+            error: {
+              code: -32001,
+              message: "Unauthorized: Invalid API key",
+              data: error.message,
+            },
+            id: id,
+          });
+        }
+
+        return res.json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32603,
+            message: "Internal error",
+            data: error instanceof Error ? error.message : "Unknown error",
+          },
+          id: id,
+        });
+      }
+    });
+
+    // JSON-RPC MCP endpoint - AgentKit compatible with OAuth credentials (legacy)
     // URL format: /:clientId/:clientSecret/v1/mcp?serpApiKey=...&unsplashAccessKey=...&bflApiKey=...
     this.app.post("/:clientId/:clientSecret/v1/mcp", async (req, res) => {
       const { clientId, clientSecret } = req.params;
       const { serpApiKey, unsplashAccessKey, bflApiKey } = req.query;
       const { jsonrpc, method, params, id } = req.body;
 
-      console.log("=== MCP JSON-RPC REQUEST ===");
+      console.log("=== MCP JSON-RPC REQUEST (OAuth) ===");
       console.log("Client ID:", clientId.substring(0, 8) + "...");
       console.log("Method:", method);
       console.log("Has SERP API Key:", !!serpApiKey);
@@ -246,7 +491,7 @@ class YouMapMCPServer {
       console.log("JSON-RPC Version:", jsonrpc);
       console.log("Request ID:", id);
       console.log("Headers Accept:", req.get("Accept"));
-      console.log("============================");
+      console.log("====================================");
 
       // Validate JSON-RPC
       if (jsonrpc !== "2.0") {
@@ -274,13 +519,13 @@ class YouMapMCPServer {
 
       try {
         // Create YouMap client with provided credentials and API keys
-        const youmapClient = createYouMapClient(
+        const youmapClient = createYouMapClient({
           clientId,
           clientSecret,
-          serpApiKey as string,
-          unsplashAccessKey as string,
-          bflApiKey as string
-        );
+          serpApiKey: serpApiKey as string,
+          unsplashAccessKey: unsplashAccessKey as string,
+          bflApiKey: bflApiKey as string,
+        });
 
         switch (method) {
           case "tools/list":
@@ -469,10 +714,10 @@ class YouMapMCPServer {
       console.log(`Tools list: http://0.0.0.0:${port}/tools`);
       console.log(`Call tool: POST http://0.0.0.0:${port}/call-tool`);
       console.log(
-        `JSON-RPC MCP: POST http://0.0.0.0:${port}/{clientId}/{clientSecret}/v1/mcp`
+        `JSON-RPC MCP (API Key): POST http://0.0.0.0:${port}/v1/mcp with X-API-Key header`
       );
       console.log(
-        `AgentKit URL format: https://mcp.youmap.com/{clientId}/{clientSecret}/v1/mcp`
+        `JSON-RPC MCP (OAuth): POST http://0.0.0.0:${port}/{clientId}/{clientSecret}/v1/mcp`
       );
       console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
     });

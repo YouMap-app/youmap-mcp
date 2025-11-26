@@ -1,5 +1,6 @@
 export interface YouMapClientConfig {
     baseURL: string;
+    apiKey?: string;
     clientId?: string;
     clientSecret?: string;
     serpApiKey?: string;
@@ -11,6 +12,7 @@ export declare class YouMapClient {
     private config;
     private authTokens?;
     private isAuthenticating;
+    private useApiKey;
     constructor(config: YouMapClientConfig);
     private ensureAuthenticated;
     private isTokenExpired;

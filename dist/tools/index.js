@@ -50,7 +50,7 @@ export const TOOLS = [
                     type: "string",
                     enum: ["public", "inviteOnly", "private"],
                     description: "Access level: public (everyone can access), inviteOnly (invite specific users), private (only you)",
-                    default: "public",
+                    default: "private",
                 },
                 coverImageFromUrl: {
                     type: "string",
@@ -128,7 +128,7 @@ export const TOOLS = [
                         isReadonly: result.isReadonly,
                         categoryIds: result.categoryIds,
                         createdAt: result.createdAt,
-                        url: `https://youmap.com/map/${result.id}`,
+                        url: `https://youmap.com/app/${result.slug}`,
                     },
                 };
             }
@@ -197,7 +197,7 @@ export const TOOLS = [
                         categoryIds: map.categoryIds,
                         createdAt: map.createdAt,
                         updatedAt: map.updatedAt,
-                        url: `https://youmap.com/map/${map.id}`,
+                        url: `https://youmap.com/app/${map.slug}`,
                     })),
                 };
             }
@@ -432,8 +432,8 @@ export const TOOLS = [
                         isQuickPost: result.isQuickPost,
                         createdAt: result.createdAt,
                         updatedAt: result.updatedAt,
-                        url: `https://youmap.com/post/${result.id}`,
-                        mapUrl: `https://youmap.com/map/${result.mapId}`,
+                        url: `https://youmap.com/app/${result.mapSlug}/posts/${result.slug}`,
+                        mapUrl: `https://youmap.com/app/${result.mapSlug}`,
                     },
                 };
             }
@@ -547,12 +547,12 @@ export const TOOLS = [
                         createdAt: post.createdAt,
                         updatedAt: post.updatedAt,
                         score: post.score,
-                        url: `https://youmap.com/post/${post.id}`,
-                        mapUrl: `https://youmap.com/map/${post.mapId}`,
+                        url: `https://youmap.com/app/${post.mapSlug}/posts/${post.slug}`,
+                        mapUrl: `https://youmap.com/app/${post.mapSlug}`,
                     })),
                     mapInfo: {
                         id: args.mapId,
-                        url: `https://youmap.com/map/${args.mapId}`,
+                        url: `https://youmap.com/app/${args.mapSlug}`,
                     },
                 };
             }
@@ -637,8 +637,8 @@ export const TOOLS = [
                         createdAt: post.createdAt,
                         updatedAt: post.updatedAt,
                         score: post.score,
-                        url: `https://youmap.com/post/${post.id}`,
-                        mapUrl: `https://youmap.com/map/${post.mapId}`,
+                        url: `https://youmap.com/app/${post.mapSlug}/posts/${post.slug}`,
+                        mapUrl: `https://youmap.com/app/${post.mapSlug}`,
                     })),
                 };
             }
@@ -965,7 +965,7 @@ export const TOOLS = [
                         updatedAt: result.updatedAt,
                         fields: result.fields,
                         url: `https://youmap.com/action/${result.id}`,
-                        mapUrl: `https://youmap.com/map/${result.mapId}`,
+                        mapUrl: `https://youmap.com/app/${result.mapSlug}`,
                     },
                 };
             }
@@ -1052,11 +1052,11 @@ export const TOOLS = [
                         fields: action.fields,
                         version: action.latestVersion,
                         url: `https://youmap.com/action/${action.id}`,
-                        mapUrl: `https://youmap.com/map/${action.mapId}`,
+                        mapUrl: `https://youmap.com/app/${action.mapSlug}`,
                     })),
                     mapInfo: {
                         id: args.mapId,
-                        url: `https://youmap.com/map/${args.mapId}`,
+                        url: `https://youmap.com/app/${args.mapSlug}`,
                     },
                 };
             }
@@ -1395,7 +1395,7 @@ export const TOOLS = [
                         isPublished: result.isPublished,
                         publishedAt: result.publishedAt,
                         url: `https://youmap.com/action/${result.id}`,
-                        mapUrl: `https://youmap.com/map/${result.mapId}`,
+                        mapUrl: `https://youmap.com/app/${result.mapSlug}`,
                     },
                 };
             }
@@ -1736,7 +1736,7 @@ export const TOOLS = [
             try {
                 const { postId, ...updateData } = args;
                 const cleanUpdateData = Object.fromEntries(Object.entries(updateData).filter(([, value]) => value !== undefined));
-                const response = await client.post(`/api/v1/post/${postId}`, cleanUpdateData);
+                const response = await client.post(`/api/v2/post/${postId}`, cleanUpdateData);
                 return {
                     success: true,
                     data: response.data,
@@ -1764,7 +1764,7 @@ export const TOOLS = [
     },
     {
         name: "generate_image",
-        description: "Generate an AI image using FLUX PRO 1.1 model based on a text prompt. This tool directly integrates with the Black Forest Labs API to create high-quality, cinematic-style images with automatic prompt enhancement. Requires BFL_API_KEY environment variable to be configured.",
+        description: "Generate an AI image using FLUX PRO 1.1 model based on a text prompt. This tool directly integrates with the Black Forest Labs API to create high-quality, cinematic-style images with automatic prompt enhancement. Requires BFL_API_KEY environment variable to be configured. Should be used as fallback only, the main recommended tool for images is search_image",
         inputSchema: {
             type: "object",
             properties: {
@@ -1931,7 +1931,7 @@ export const TOOLS = [
     },
     {
         name: "search_image",
-        description: "Search for existing images using SerpAPI and return a high-quality image URL. This tool searches Google Images, filters results for quality, validates accessibility, and falls back to Unsplash if needed. Requires SERP_API_KEY and UNSPLASH_ACCESS_KEY environment variables to be configured.",
+        description: "Search for existing images using SerpAPI and return a high-quality image URL. Main tool for images within the Youmap ecosystem. This tool searches Google Images, filters results for quality, validates accessibility, and falls back to Unsplash if needed. Requires SERP_API_KEY and UNSPLASH_ACCESS_KEY environment variables to be configured.",
         inputSchema: {
             type: "object",
             properties: {

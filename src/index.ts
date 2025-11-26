@@ -29,8 +29,8 @@ class YouMapMCPServer {
     );
 
     this.youmapClient = new YouMapClient({
-      baseURL:
-        process.env.YOUMAP_BASE_URL || "https://developer.youmap.com/api/v1/",
+      baseURL: process.env.YOUMAP_BASE_URL || "https://developer.youmap.com",
+      apiKey: process.env.YOUMAP_API_KEY,
       clientId: process.env.YOUMAP_CLIENT_ID,
       clientSecret: process.env.YOUMAP_CLIENT_SECRET,
     });

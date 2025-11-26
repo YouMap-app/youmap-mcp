@@ -2,6 +2,7 @@ import axios, { AxiosInstance } from "axios";
 
 export interface YouMapClientConfig {
   baseURL: string;
+  apiKey?: string;
   clientId?: string;
   clientSecret?: string;
   serpApiKey?: string;
@@ -21,9 +22,13 @@ export class YouMapClient {
   private config: YouMapClientConfig;
   private authTokens?: AuthTokens;
   private isAuthenticating = false;
+  private useApiKey: boolean;
 
   constructor(config: YouMapClientConfig) {
     this.config = config;
+    // Use API key if provided, otherwise fall back to OAuth
+    this.useApiKey = !!config.apiKey;
+
     this.client = axios.create({
       baseURL: config.baseURL,
       headers: {
@@ -32,10 +37,15 @@ export class YouMapClient {
     });
 
     this.client.interceptors.request.use(async (config) => {
-      await this.ensureAuthenticated();
-
-      if (this.authTokens) {
-        config.headers.Authorization = `Bearer ${this.authTokens.token}`;
+      if (this.useApiKey) {
+        // Use X-API-Key header for API key authentication
+        config.headers["X-API-Key"] = this.config.apiKey;
+      } else {
+        // Use OAuth Bearer token
+        await this.ensureAuthenticated();
+        if (this.authTokens) {
+          config.headers.Authorization = `Bearer ${this.authTokens.token}`;
+        }
       }
 
       return config;
@@ -44,6 +54,11 @@ export class YouMapClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error) => {
+        // For API key auth, don't attempt token refresh - just throw the error
+        if (this.useApiKey) {
+          throw error;
+        }
+
         if (error.response?.status === 401 && this.authTokens) {
           try {
             await this.refreshAccessToken();
@@ -73,6 +88,11 @@ export class YouMapClient {
   }
 
   private async ensureAuthenticated(): Promise<void> {
+    // Skip OAuth authentication if using API key
+    if (this.useApiKey) {
+      return;
+    }
+
     if (this.isAuthenticating) {
       while (this.isAuthenticating) {
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -86,7 +106,7 @@ export class YouMapClient {
 
     if (!this.config.clientId || !this.config.clientSecret) {
       throw new Error(
-        "YOUMAP_CLIENT_ID and YOUMAP_CLIENT_SECRET environment variables are required for authentication"
+        "Authentication required: Set YOUMAP_API_KEY or both YOUMAP_CLIENT_ID and YOUMAP_CLIENT_SECRET"
       );
     }
 

@@ -25,6 +25,27 @@ Add this to your Claude Desktop configuration file:
 **macOS**: `~/.config/claude-desktop/claude_desktop_config.json`
 **Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
 
+#### Using API Key (Recommended)
+
+```json
+{
+  "mcpServers": {
+    "youmap": {
+      "command": "youmap-mcp",
+      "env": {
+        "YOUMAP_API_KEY": "ym_your_api_key_here",
+        "YOUMAP_BASE_URL": "https://developer.youmap.com",
+        "SERP_API_KEY": "",
+        "BFL_API_KEY": "",
+        "UNSPLASH_ACCESS_KEY": ""
+      }
+    }
+  }
+}
+```
+
+#### Using OAuth Credentials (Legacy)
+
 ```json
 {
   "mcpServers": {
@@ -45,23 +66,80 @@ Add this to your Claude Desktop configuration file:
 
 ### Environment Variables
 
-- `YOUMAP_CLIENT_ID`: Your YouMap OAuth client ID (required)
-- `YOUMAP_CLIENT_SECRET`: Your YouMap OAuth client secret (required)
-- `YOUMAP_BASE_URL`: Base URL for the YouMap API (defaults to `https://youmap.com/api`)
-  Optional keys if you want to get images with the YouMap MCP server for your content:
+#### Authentication (choose one)
+
+- `YOUMAP_API_KEY`: Your YouMap API key (recommended - simpler setup)
+- `YOUMAP_CLIENT_ID` + `YOUMAP_CLIENT_SECRET`: OAuth client credentials (legacy)
+
+#### Configuration
+
+- `YOUMAP_BASE_URL`: Base URL for the YouMap API (defaults to `https://developer.youmap.com`)
+
+#### Optional - Image APIs
+
 - `SERP_API_KEY`: Key to SERP API to get images for posts (search_image action)
 - `BFL_API_KEY`: Key to BFL to generate images using FLUX-PRO-1.1 model for maps (generate_image action)
 - `UNSPLASH_ACCESS_KEY`: Key to Unsplash that works as a fallback for SERP (search_image action)
 
 ## Authentication
 
-This MCP server uses OAuth 2.0 client credentials flow for authentication. The server automatically:
+### API Key Authentication (Recommended)
 
-1. Authenticates using your client ID and secret to obtain access tokens
-2. Manages token refresh automatically when tokens expire
-3. Retries failed requests with fresh tokens when needed
+The simplest way to authenticate is using an API key:
 
-You need to obtain your client credentials from YouMap's developer portal or API settings. You need a YouMap account first and then you can generate the API key here: http://docs.youmap.com/
+1. Create a YouMap account at [youmap.com](https://youmap.com)
+2. Generate an API key at [docs.youmap.com](http://docs.youmap.com/)
+3. Set the `YOUMAP_API_KEY` environment variable
+
+The API key is sent via the `X-API-Key` header with each request.
+
+### OAuth 2.0 Authentication (Legacy)
+
+Alternatively, you can use OAuth 2.0 client credentials flow:
+
+1. Obtain client credentials from YouMap's developer portal
+2. Set both `YOUMAP_CLIENT_ID` and `YOUMAP_CLIENT_SECRET` environment variables
+
+The server automatically:
+
+- Authenticates using your client ID and secret to obtain access tokens
+- Manages token refresh automatically when tokens expire
+- Retries failed requests with fresh tokens when needed
+
+## HTTP Server Mode
+
+The MCP server can also run as an HTTP server for integration with other tools:
+
+```bash
+MCP_MODE=http PORT=3000 youmap-mcp
+```
+
+### Endpoints
+
+| Endpoint                          | Method | Description                          |
+| --------------------------------- | ------ | ------------------------------------ |
+| `/health`                         | GET    | Health check                         |
+| `/tools`                          | GET    | List available tools                 |
+| `/v1/mcp`                         | POST   | JSON-RPC MCP endpoint (API key auth) |
+| `/:clientId/:clientSecret/v1/mcp` | POST   | JSON-RPC MCP endpoint (OAuth)        |
+
+### API Key Authentication
+
+```bash
+curl -X POST http://localhost:3000/v1/mcp \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: ym_your_api_key_here" \
+  -d '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}'
+```
+
+### OAuth Authentication
+
+```bash
+curl -X POST http://localhost:3000/{clientId}/{clientSecret}/v1/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}'
+```
 
 ## Available Tools
 
