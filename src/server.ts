@@ -238,11 +238,20 @@ class YouMapMCPServer {
 
     // JSON-RPC MCP endpoint with API key authentication
     // URL format: /v1/mcp with X-API-Key header or apiKey query param
+    // Additional API keys can be passed via headers or query params:
+    //   - X-SERP-API-Key / serpApiKey
+    //   - X-Unsplash-Access-Key / unsplashAccessKey  
+    //   - X-BFL-API-Key / bflApiKey
     this.app.post("/v1/mcp", async (req, res) => {
       const apiKey = (req.get("X-API-Key") || req.query.apiKey) as
         | string
         | undefined;
-      const { serpApiKey, unsplashAccessKey, bflApiKey } = req.query;
+      
+      // Support both headers and query params for external API keys
+      const serpApiKey = (req.get("X-SERP-API-Key") || req.query.serpApiKey) as string | undefined;
+      const unsplashAccessKey = (req.get("X-Unsplash-Access-Key") || req.query.unsplashAccessKey) as string | undefined;
+      const bflApiKey = (req.get("X-BFL-API-Key") || req.query.bflApiKey) as string | undefined;
+      
       const { jsonrpc, method, params, id } = req.body;
 
       console.log("=== MCP JSON-RPC REQUEST (API Key) ===");

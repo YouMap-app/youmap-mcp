@@ -3,20 +3,22 @@ name: Deploy to AWS ECS
 on:
   push:
     branches:
-      - main
-      - master
+      - develop # Deploy to dev
+      - stage # Deploy to stage
+      - main # Deploy to prod
+      - master # Deploy to prod
     tags:
       - "v*"
   pull_request:
     branches:
+      - develop
+      - stage
       - main
       - master
 
 env:
   AWS_REGION: us-east-2
   ECR_REPOSITORY: youmap/mcp
-  ECS_SERVICE: youmap-production-mcp
-  ECS_CLUSTER: youmap-production-main
 
 jobs:
   test:
@@ -39,17 +41,42 @@ jobs:
 
   build-and-deploy:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/stage' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "ecs_cluster=youmap-dev-main" >> $GITHUB_OUTPUT
+            echo "ecs_service=youmap-dev-mcp" >> $GITHUB_OUTPUT
+            echo "image_tag=latest" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/stage" ]]; then
+            echo "environment=stage" >> $GITHUB_OUTPUT
+            echo "ecs_cluster=youmap-stage-main" >> $GITHUB_OUTPUT
+            echo "ecs_service=youmap-stage-mcp" >> $GITHUB_OUTPUT
+            echo "image_tag=latest" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+            echo "ecs_cluster=youmap-production-main" >> $GITHUB_OUTPUT
+            echo "ecs_service=youmap-production-mcp" >> $GITHUB_OUTPUT
+            echo "image_tag=master" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" =~ ^refs/tags/v ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+            echo "ecs_cluster=youmap-production-main" >> $GITHUB_OUTPUT
+            echo "ecs_service=youmap-production-mcp" >> $GITHUB_OUTPUT
+            echo "image_tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets[format('AWS_ACCESS_KEY_ID_{0}', steps.env.outputs.environment == 'dev' && 'DEV' || steps.env.outputs.environment == 'stage' && 'STAGE' || 'PROD')] }}
+          aws-secret-access-key: ${{ secrets[format('AWS_SECRET_ACCESS_KEY_{0}', steps.env.outputs.environment == 'dev' && 'DEV' || steps.env.outputs.environment == 'stage' && 'STAGE' || 'PROD')] }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Set up Docker Buildx
@@ -76,10 +103,47 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.env.outputs.image_tag }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.env.outputs.environment }}-${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Force ECS deployment
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
         run: |
-          aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service ${{ env.ECS_SERVICE }} --force-new-deployment --region ${{ env.AWS_REGION }}
+          echo "Deploying to ${{ steps.env.outputs.environment }} environment"
+          echo "ECS Cluster: ${{ steps.env.outputs.ecs_cluster }}"
+          echo "ECS Service: ${{ steps.env.outputs.ecs_service }}"
+          aws ecs update-service \
+            --cluster ${{ steps.env.outputs.ecs_cluster }} \
+            --service ${{ steps.env.outputs.ecs_service }} \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Wait for deployment to complete
+        run: |
+          echo "Waiting for ECS service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ steps.env.outputs.ecs_cluster }} \
+            --services ${{ steps.env.outputs.ecs_service }} \
+            --region ${{ env.AWS_REGION }}
+          echo "✅ Deployment completed successfully!"
+
+      - name: Deployment summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ steps.env.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ECS Cluster**: ${{ steps.env.outputs.ecs_cluster }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **ECS Service**: ${{ steps.env.outputs.ecs_service }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag**: ${{ steps.env.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ steps.env.outputs.environment }}" == "dev" ]]; then
+            echo "🔗 **Service URL**: https://mcp.dev.youmap.com" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ steps.env.outputs.environment }}" == "stage" ]]; then
+            echo "🔗 **Service URL**: https://mcp.stage.youmap.com" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "🔗 **Service URL**: https://mcp.youmap.com" >> $GITHUB_STEP_SUMMARY
+          fi

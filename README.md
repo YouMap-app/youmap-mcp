@@ -2,6 +2,14 @@
 
 A Model Context Protocol (MCP) server for the YouMap API, enabling AI assistants to create and manage maps through natural language interactions.
 
+## Deployment Status
+
+| Environment | Branch          | URL                          | Status                                                          |
+| ----------- | --------------- | ---------------------------- | --------------------------------------------------------------- |
+| Production  | `main`/`master` | https://mcp.youmap.com       | ![Production](https://img.shields.io/badge/status-live-success) |
+| Stage       | `stage`         | https://mcp.stage.youmap.com | ![Stage](https://img.shields.io/badge/status-live-success)      |
+| Development | `develop`       | https://mcp.dev.youmap.com   | ![Dev](https://img.shields.io/badge/status-live-success)        |
+
 ## Installation
 
 ### Global Installation (Recommended)
