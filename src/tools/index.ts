@@ -31,7 +31,7 @@ function parseValidationErrors(errorResponse: any): string {
     if (error.children && error.children.length > 0) {
       const newPath = path ? `${path}.${error.property}` : error.property;
       error.children.forEach((child: any) =>
-        extractConstraints(child, newPath)
+        extractConstraints(child, newPath),
       );
     }
   }
@@ -162,11 +162,11 @@ export const TOOLS: MCPTool[] = [
       } catch (error: any) {
         if (error.response?.status === 401) {
           throw new Error(
-            "Authentication failed. Please check your YOUMAP_API_KEY."
+            "Authentication failed. Please check your YOUMAP_API_KEY.",
           );
         } else if (error.response?.status === 403) {
           throw new Error(
-            "Access denied. You don't have permission to create maps."
+            "Access denied. You don't have permission to create maps.",
           );
         } else if (error.response?.status === 400) {
           const validationDetails = parseValidationErrors(error.response);
@@ -234,11 +234,11 @@ export const TOOLS: MCPTool[] = [
       } catch (error: any) {
         if (error.response?.status === 401) {
           throw new Error(
-            "Authentication failed. Please check your YOUMAP_API_KEY."
+            "Authentication failed. Please check your YOUMAP_API_KEY.",
           );
         } else if (error.response?.status === 403) {
           throw new Error(
-            "Access denied. You don't have permission to list maps."
+            "Access denied. You don't have permission to list maps.",
           );
         } else {
           console.log(error);
@@ -483,18 +483,18 @@ export const TOOLS: MCPTool[] = [
       } catch (error: any) {
         if (error.response?.status === 401) {
           throw new Error(
-            "Authentication failed. Please check your credentials."
+            "Authentication failed. Please check your credentials.",
           );
         } else if (error.response?.status === 403) {
           throw new Error(
-            "Access denied. You don't have permission to create posts on this map."
+            "Access denied. You don't have permission to create posts on this map.",
           );
         } else if (error.response?.status === 400) {
           const validationDetails = parseValidationErrors(error.response);
           throw new Error(`Validation error: ${validationDetails}`);
         } else if (error.response?.status === 404) {
           throw new Error(
-            "Map not found. Please check the mapId and ensure the map exists."
+            "Map not found. Please check the mapId and ensure the map exists.",
           );
         } else {
           throw new Error(`Failed to create post: ${error.message}`);
@@ -568,7 +568,7 @@ export const TOOLS: MCPTool[] = [
 
         const result = await client.get(
           `/api/v1/map/${args.mapId}/posts`,
-          params
+          params,
         );
 
         return {
@@ -612,15 +612,15 @@ export const TOOLS: MCPTool[] = [
       } catch (error: any) {
         if (error.response?.status === 401) {
           throw new Error(
-            "Authentication failed. Please check your credentials."
+            "Authentication failed. Please check your credentials.",
           );
         } else if (error.response?.status === 403) {
           throw new Error(
-            "Access denied. You don't have permission to view posts on this map."
+            "Access denied. You don't have permission to view posts on this map.",
           );
         } else if (error.response?.status === 404) {
           throw new Error(
-            "Map not found. Please check the mapId and ensure the map exists."
+            "Map not found. Please check the mapId and ensure the map exists.",
           );
         } else {
           throw new Error(`Failed to list posts: ${error.message}`);
@@ -703,7 +703,7 @@ export const TOOLS: MCPTool[] = [
       } catch (error: any) {
         if (error.response?.status === 401) {
           throw new Error(
-            "Authentication failed. Please check your credentials."
+            "Authentication failed. Please check your credentials.",
           );
         } else if (error.response?.status === 400) {
           const validationDetails = parseValidationErrors(error.response);
@@ -1040,18 +1040,18 @@ export const TOOLS: MCPTool[] = [
       } catch (error: any) {
         if (error.response?.status === 401) {
           throw new Error(
-            "Authentication failed. Please check your credentials."
+            "Authentication failed. Please check your credentials.",
           );
         } else if (error.response?.status === 403) {
           throw new Error(
-            "Access denied. You don't have permission to create actions on this map."
+            "Access denied. You don't have permission to create actions on this map.",
           );
         } else if (error.response?.status === 400) {
           const validationDetails = parseValidationErrors(error.response);
           throw new Error(`Validation error: ${validationDetails}`);
         } else if (error.response?.status === 404) {
           throw new Error(
-            "Map not found. Please check the mapId and ensure the map exists."
+            "Map not found. Please check the mapId and ensure the map exists.",
           );
         } else {
           throw new Error(`Failed to create action: ${error.message}`);
@@ -1104,7 +1104,7 @@ export const TOOLS: MCPTool[] = [
 
         const result = await client.get(
           `/api/v1/map/${args.mapId}/post-templates`,
-          params
+          params,
         );
 
         return {
@@ -1140,15 +1140,15 @@ export const TOOLS: MCPTool[] = [
       } catch (error: any) {
         if (error.response?.status === 401) {
           throw new Error(
-            "Authentication failed. Please check your credentials."
+            "Authentication failed. Please check your credentials.",
           );
         } else if (error.response?.status === 403) {
           throw new Error(
-            "Access denied. You don't have permission to view actions on this map."
+            "Access denied. You don't have permission to view actions on this map.",
           );
         } else if (error.response?.status === 404) {
           throw new Error(
-            "Map not found. Please check the mapId and ensure the map exists."
+            "Map not found. Please check the mapId and ensure the map exists.",
           );
         } else {
           throw new Error(`Failed to list actions: ${error.message}`);
@@ -1465,7 +1465,7 @@ export const TOOLS: MCPTool[] = [
 
         const result = await client.put(
           `/api/v1/post-template/${args.actionId}/v/${args.version}`,
-          updateData
+          updateData,
         );
 
         return {
@@ -1493,18 +1493,18 @@ export const TOOLS: MCPTool[] = [
       } catch (error: any) {
         if (error.response?.status === 401) {
           throw new Error(
-            "Authentication failed. Please check your credentials."
+            "Authentication failed. Please check your credentials.",
           );
         } else if (error.response?.status === 403) {
           throw new Error(
-            "Access denied. You don't have permission to update this action."
+            "Access denied. You don't have permission to update this action.",
           );
         } else if (error.response?.status === 400) {
           const validationDetails = parseValidationErrors(error.response);
           throw new Error(`Validation error: ${validationDetails}`);
         } else if (error.response?.status === 404) {
           throw new Error(
-            `Action not found. Please check the actionId ${args.actionId} and version ${args.version}.`
+            `Action not found. Please check the actionId ${args.actionId} and version ${args.version}.`,
           );
         } else {
           throw new Error(`Failed to update action: ${error.message}`);
@@ -1844,12 +1844,12 @@ export const TOOLS: MCPTool[] = [
         const { postId, ...updateData } = args;
 
         const cleanUpdateData = Object.fromEntries(
-          Object.entries(updateData).filter(([, value]) => value !== undefined)
+          Object.entries(updateData).filter(([, value]) => value !== undefined),
         );
 
         const response = await client.post(
           `/api/v2/post/${postId}`,
-          cleanUpdateData
+          cleanUpdateData,
         );
         return {
           success: true,
@@ -1858,15 +1858,15 @@ export const TOOLS: MCPTool[] = [
       } catch (error: any) {
         if (error.response?.status === 401) {
           throw new Error(
-            "Authentication failed. Please check your access token."
+            "Authentication failed. Please check your access token.",
           );
         } else if (error.response?.status === 403) {
           throw new Error(
-            "Access denied. You don't have permission to update this post."
+            "Access denied. You don't have permission to update this post.",
           );
         } else if (error.response?.status === 404) {
           throw new Error(
-            "Post not found. Please check the postId and ensure the post exists."
+            "Post not found. Please check the postId and ensure the post exists.",
           );
         } else if (error.response?.status === 400) {
           const validationDetails = parseValidationErrors(error.response);
@@ -1926,7 +1926,7 @@ export const TOOLS: MCPTool[] = [
       const bflApiKey = client.bflApiKey;
       if (!bflApiKey) {
         throw new Error(
-          "BFL_API_KEY is not configured. Please provide the BFL API key in the MCP server URL query parameters: ?bflApiKey=your_key_here"
+          "BFL_API_KEY is not configured. Please provide the BFL API key in the MCP server URL query parameters: ?bflApiKey=your_key_here",
         );
       }
 
@@ -1960,34 +1960,34 @@ export const TOOLS: MCPTool[] = [
         } catch (error: any) {
           if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
             throw new Error(
-              "Timeout while connecting to FLUX API - FLUX did not respond within 30 seconds"
+              "Timeout while connecting to FLUX API - FLUX did not respond within 30 seconds",
             );
           } else if (
             error.code === "ECONNREFUSED" ||
             error.code === "ENOTFOUND"
           ) {
             throw new Error(
-              "Unable to connect to FLUX API - network connection failed"
+              "Unable to connect to FLUX API - network connection failed",
             );
           } else if (error.response) {
             const status = error.response.status;
             if (status === 401) {
               throw new Error(
-                "FLUX API authentication failed - invalid API key"
+                "FLUX API authentication failed - invalid API key",
               );
             } else if (status === 402) {
               throw new Error(
-                "FLUX API payment required - insufficient credits"
+                "FLUX API payment required - insufficient credits",
               );
             } else if (status === 429) {
               throw new Error(
-                "FLUX API rate limit exceeded - too many active requests"
+                "FLUX API rate limit exceeded - too many active requests",
               );
             } else {
               throw new Error(
                 `FLUX API returned error ${status}: ${
                   error.response.data?.detail || error.response.statusText
-                }`
+                }`,
               );
             }
           } else {
@@ -2060,7 +2060,7 @@ export const TOOLS: MCPTool[] = [
         }
 
         throw new Error(
-          "FLUX API generation timed out - image took too long to generate (max 1 minute)"
+          "FLUX API generation timed out - image took too long to generate (max 1 minute)",
         );
       } catch (error: any) {
         if (
@@ -2072,7 +2072,7 @@ export const TOOLS: MCPTool[] = [
           throw error;
         } else {
           throw new Error(
-            `Unexpected error in image generation: ${error.message}`
+            `Unexpected error in image generation: ${error.message}`,
           );
         }
       }
@@ -2103,13 +2103,13 @@ export const TOOLS: MCPTool[] = [
 
       if (!serpApiKey) {
         throw new Error(
-          "SERP_API_KEY is not configured. Please provide the SERP API key in the MCP server URL query parameters: ?serpApiKey=your_key_here"
+          "SERP_API_KEY is not configured. Please provide the SERP API key in the MCP server URL query parameters: ?serpApiKey=your_key_here",
         );
       }
 
       if (!unsplashAccessKey) {
         throw new Error(
-          "UNSPLASH_ACCESS_KEY is not configured. Please provide the Unsplash access key in the MCP server URL query parameters: ?unsplashAccessKey=your_key_here"
+          "UNSPLASH_ACCESS_KEY is not configured. Please provide the Unsplash access key in the MCP server URL query parameters: ?unsplashAccessKey=your_key_here",
         );
       }
 
@@ -2147,7 +2147,7 @@ export const TOOLS: MCPTool[] = [
       };
 
       const searchUnsplashImage = async (
-        searchQuery: string
+        searchQuery: string,
       ): Promise<string | null> => {
         try {
           const searchUrl = "https://api.unsplash.com/search/photos";
@@ -2207,7 +2207,7 @@ export const TOOLS: MCPTool[] = [
             const hasWatermark = watermarkKeywords.some(
               (keyword) =>
                 description.includes(keyword) ||
-                altDescription.includes(keyword)
+                altDescription.includes(keyword),
             );
 
             if (hasWatermark) {
@@ -2222,7 +2222,7 @@ export const TOOLS: MCPTool[] = [
           }
 
           qualityPhotos.sort(
-            (a, b) => b.likes - a.likes || b.resolution - a.resolution
+            (a, b) => b.likes - a.likes || b.resolution - a.resolution,
           );
           const topCount = Math.max(1, Math.floor(qualityPhotos.length * 0.8));
           const topPhotos = qualityPhotos.slice(0, topCount);
@@ -2270,7 +2270,7 @@ export const TOOLS: MCPTool[] = [
             throw new Error("SerpAPI authentication failed - invalid API key");
           } else if (response.status === 403) {
             throw new Error(
-              "SerpAPI access forbidden - API key limit exceeded or permissions issue"
+              "SerpAPI access forbidden - API key limit exceeded or permissions issue",
             );
           } else if (response.status === 429) {
             throw new Error("SerpAPI rate limit exceeded - too many requests");
@@ -2289,7 +2289,7 @@ export const TOOLS: MCPTool[] = [
           }
 
           throw new Error(
-            "No images found for this query from SerpAPI or Unsplash fallback"
+            "No images found for this query from SerpAPI or Unsplash fallback",
           );
         }
 
@@ -2319,7 +2319,7 @@ export const TOOLS: MCPTool[] = [
           ];
           if (
             lowQualitySources.some((sourceKeyword) =>
-              source.includes(sourceKeyword)
+              source.includes(sourceKeyword),
             )
           ) {
             continue;
@@ -2363,7 +2363,7 @@ export const TOOLS: MCPTool[] = [
             "pixabay",
           ];
           const boostApplied = qualitySources.some((qualitySource) =>
-            source.includes(qualitySource)
+            source.includes(qualitySource),
           );
           if (boostApplied) {
             qualityScore *= 2;
@@ -2379,7 +2379,7 @@ export const TOOLS: MCPTool[] = [
           }
 
           throw new Error(
-            "No quality images found from SerpAPI after filtering, and Unsplash fallback failed"
+            "No quality images found from SerpAPI after filtering, and Unsplash fallback failed",
           );
         }
 
@@ -2400,7 +2400,7 @@ export const TOOLS: MCPTool[] = [
 
         for (let attempt = 0; attempt < maxRetries; attempt++) {
           const availableImages = topQualityImages.filter(
-            (item) => !usedIndices.has(item.index)
+            (item) => !usedIndices.has(item.index),
           );
 
           if (!availableImages.length) {
@@ -2428,7 +2428,7 @@ export const TOOLS: MCPTool[] = [
             }
 
             throw new Error(
-              "SerpAPI returned images but none could be validated as accessible, and Unsplash fallback also failed"
+              "SerpAPI returned images but none could be validated as accessible, and Unsplash fallback also failed",
             );
           }
         }
@@ -2437,7 +2437,7 @@ export const TOOLS: MCPTool[] = [
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") {
           throw new Error(
-            "Request timeout - external image service did not respond in time"
+            "Request timeout - external image service did not respond in time",
           );
         }
 
@@ -2452,7 +2452,7 @@ export const TOOLS: MCPTool[] = [
           throw new Error(
             `Unexpected error in image search: ${
               error instanceof Error ? error.message : String(error)
-            }`
+            }`,
           );
         }
       }
@@ -2475,7 +2475,7 @@ export const TOOLS: MCPTool[] = [
     handler: async (args: any, client: YouMapClient) => {
       try {
         const result = await client.delete(
-          `/api/v1/post-template/${args.actionId}`
+          `/api/v1/post-template/${args.actionId}`,
         );
 
         if (result.success) {
@@ -2491,15 +2491,15 @@ export const TOOLS: MCPTool[] = [
       } catch (error: any) {
         if (error.response?.status === 401) {
           throw new Error(
-            "Authentication failed. Please check your credentials."
+            "Authentication failed. Please check your credentials.",
           );
         } else if (error.response?.status === 403) {
           throw new Error(
-            "Access denied. You don't have permission to delete this action, or the action is not removable because it's being used by posts."
+            "Access denied. You don't have permission to delete this action, or the action is not removable because it's being used by posts.",
           );
         } else if (error.response?.status === 404) {
           throw new Error(
-            "Action not found. Please check the actionId and ensure the action exists."
+            "Action not found. Please check the actionId and ensure the action exists.",
           );
         } else if (error.response?.status === 400) {
           const validationDetails = parseValidationErrors(error.response);
@@ -2541,15 +2541,15 @@ export const TOOLS: MCPTool[] = [
       } catch (error: any) {
         if (error.response?.status === 401) {
           throw new Error(
-            "Authentication failed. Please check your credentials."
+            "Authentication failed. Please check your credentials.",
           );
         } else if (error.response?.status === 403) {
           throw new Error(
-            "Access denied. You don't have permission to delete this map, or you are not the owner of this map."
+            "Access denied. You don't have permission to delete this map, or you are not the owner of this map.",
           );
         } else if (error.response?.status === 404) {
           throw new Error(
-            "Map not found. Please check the mapId and ensure the map exists."
+            "Map not found. Please check the mapId and ensure the map exists.",
           );
         } else if (error.response?.status === 400) {
           const validationDetails = parseValidationErrors(error.response);
@@ -2598,11 +2598,11 @@ export const TOOLS: MCPTool[] = [
           switch (status) {
             case 401:
               throw new Error(
-                "Authentication required. Please check your access token."
+                "Authentication required. Please check your access token.",
               );
             case 403:
               throw new Error(
-                "Access denied. You don't have permission to delete this post."
+                "Access denied. You don't have permission to delete this post.",
               );
             case 404:
               throw new Error(`Post with ID ${args.postId} not found.`);
@@ -2720,7 +2720,7 @@ export const TOOLS: MCPTool[] = [
         // Make API request to update the map
         const response = await client.post(
           `/api/v1/maps/${mapId}`,
-          cleanUpdateData
+          cleanUpdateData,
         );
 
         return {
@@ -2737,11 +2737,11 @@ export const TOOLS: MCPTool[] = [
           switch (status) {
             case 401:
               throw new Error(
-                "Authentication required. Please check your access token."
+                "Authentication required. Please check your access token.",
               );
             case 403:
               throw new Error(
-                "Access denied. You don't have permission to update this map."
+                "Access denied. You don't have permission to update this map.",
               );
             case 404:
               throw new Error(`Map with ID ${args.mapId} not found.`);
@@ -2785,7 +2785,7 @@ export const TOOLS: MCPTool[] = [
         if (args.filter) {
           const filterLower = args.filter.toLowerCase();
           filteredEmojis = EMOJI_SHORTNAMES.filter((emoji) =>
-            emoji.toLowerCase().includes(filterLower)
+            emoji.toLowerCase().includes(filterLower),
           );
         }
 
@@ -2836,7 +2836,7 @@ export const TOOLS: MCPTool[] = [
 
         // Make API request to admin delete endpoint
         const response = await client.delete(
-          `/api/v1/post/admin/${args.postId}`
+          `/api/v1/post/admin/${args.postId}`,
         );
 
         return {
@@ -2853,17 +2853,95 @@ export const TOOLS: MCPTool[] = [
           switch (status) {
             case 401:
               throw new Error(
-                "Authentication required. Please check your access token."
+                "Authentication required. Please check your access token.",
               );
             case 403:
               throw new Error(
-                "Access denied. Admin privileges required to delete posts."
+                "Access denied. Admin privileges required to delete posts.",
               );
             case 404:
               throw new Error(`Post with ID ${args.postId} not found.`);
             case 400:
               const validationDetails = parseValidationErrors(error.response);
               throw new Error(`Validation error: ${validationDetails}`);
+            default:
+              throw new Error(`Server error (${status}): ${message}`);
+          }
+        }
+
+        throw new Error(`Network error: ${error.message}`);
+      }
+    },
+  },
+  {
+    name: "check_map_name_availability",
+    description:
+      "Check if a map name is available for use. Map names must be unique in YouMap, so this tool helps verify if a desired name can be used before creating a map.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description:
+            "Map name to check for availability (e.g., 'Best Coffee Shops', 'Hiking Trails 2024')",
+          minLength: 3,
+          maxLength: 50,
+        },
+      },
+      required: ["name"],
+    },
+    handler: async (args: any, client: YouMapClient) => {
+      try {
+        if (!args.name || typeof args.name !== "string") {
+          throw new Error("Map name is required and must be a string");
+        }
+
+        if (args.name.length < 3 || args.name.length > 50) {
+          throw new Error("Map name must be between 3 and 50 characters");
+        }
+
+        const encodedName = encodeURIComponent(args.name);
+
+        const result = await client.get(
+          `/api/v1/map/name-availability/${encodedName}`,
+        );
+
+        const isAvailable = result?.success === true;
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  name: args.name,
+                  available: isAvailable,
+                  message: isAvailable
+                    ? `The map name "${args.name}" is available and can be used.`
+                    : `The map name "${args.name}" is already taken. Please choose a different name.`,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      } catch (error: any) {
+        console.error("Error checking map name availability:", error);
+
+        if (error.response) {
+          const status = error.response.status;
+          const message = error.response.data?.message || error.message;
+
+          switch (status) {
+            case 400:
+              throw new Error(
+                `Invalid map name: ${message || "Name does not meet requirements"}`,
+              );
+            case 401:
+              throw new Error(
+                "Authentication required. Please check your access token.",
+              );
             default:
               throw new Error(`Server error (${status}): ${message}`);
           }
