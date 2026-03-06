@@ -367,31 +367,29 @@ export const TOOLS: MCPTool[] = [
             },
             dateField: {
               type: "object",
+              description:
+                'Date/time value for a date field. Which properties to use depends on the dateType set when the action was created: dateType "Date" → use startDate (and endDate if allowTimeRanges). dateType "Time" → use startTime (and endTime if allowTimeRanges). dateType "DateAndTime" → use startDate + startTime (and endDate + endTime if allowTimeRanges). All values are UNIX timestamp strings, e.g. "1756771200".',
               properties: {
                 fieldTypeId: { type: "number" },
                 startDate: {
                   type: "string",
-                  format: "timestamp",
                   description:
-                    'Example: "1756771200". Only the date will be taken from this timestamp.',
+                    'Date as UNIX timestamp string, e.g. "1756771200". Used when dateType is "Date" or "DateAndTime". Only the date portion is extracted.',
                 },
                 endDate: {
                   type: "string",
-                  format: "timestamp",
                   description:
-                    'Example: "1756771200". Only the date will be taken from this timestamp',
+                    'End date as UNIX timestamp string. Only used when allowTimeRanges is true. Only the date portion is extracted.',
                 },
                 startTime: {
                   type: "string",
-                  format: "timestamp",
                   description:
-                    'Example: "1756771200". Only the time will be taken from this timestamp.',
+                    'Time as UNIX timestamp string, e.g. "1756771200". Used when dateType is "Time" or "DateAndTime". Only the time portion is extracted.',
                 },
                 endTime: {
                   type: "string",
-                  format: "timestamp",
                   description:
-                    'Example: "1756771200". Only the time will be taken from this timestamp',
+                    'End time as UNIX timestamp string. Only used when allowTimeRanges is true. Only the time portion is extracted.',
                 },
               },
             },
@@ -923,7 +921,8 @@ export const TOOLS: MCPTool[] = [
             },
             dateField: {
               type: "object",
-              description: "Single date field for the action",
+              description:
+                'Single date/time field. dateType controls what users fill in: "Date" = date only (startDate/endDate), "Time" = time only (startTime/endTime), "DateAndTime" = both date and time fields. allowTimeRanges enables start+end (range) instead of just a single value. If action duration is BasedOnDateField, both required and allowTimeRanges must be true.',
               properties: {
                 label: { type: "string", description: "Field label" },
                 order: { type: "number", description: "Field order" },
@@ -940,11 +939,12 @@ export const TOOLS: MCPTool[] = [
                 dateType: {
                   type: "string",
                   enum: ["Date", "Time", "DateAndTime"],
-                  description: "Type of date input",
+                  description:
+                    '"Date" = date picker only, "Time" = time picker only, "DateAndTime" = both date and time pickers',
                 },
                 allowTimeRanges: {
                   type: "boolean",
-                  description: "Whether to allow start/end ranges. Must be true if action duration is BasedOnDateField",
+                  description: "If true, users specify start+end (a range). If false, single date/time only. Must be true if action duration is BasedOnDateField",
                   default: false,
                 },
               },
@@ -1386,7 +1386,8 @@ export const TOOLS: MCPTool[] = [
             },
             dateField: {
               type: "object",
-              description: "Single date field for the action",
+              description:
+                'Single date/time field. dateType controls what users fill in: "Date" = date only (startDate/endDate), "Time" = time only (startTime/endTime), "DateAndTime" = both date and time fields. allowTimeRanges enables start+end (range) instead of just a single value. If action duration is BasedOnDateField, both required and allowTimeRanges must be true.',
               properties: {
                 label: { type: "string", description: "Field label" },
                 order: { type: "number", description: "Field order" },
@@ -1403,11 +1404,12 @@ export const TOOLS: MCPTool[] = [
                 dateType: {
                   type: "string",
                   enum: ["Date", "Time", "DateAndTime"],
-                  description: "Type of date input",
+                  description:
+                    '"Date" = date picker only, "Time" = time picker only, "DateAndTime" = both date and time pickers',
                 },
                 allowTimeRanges: {
                   type: "boolean",
-                  description: "Whether to allow start/end ranges. Must be true if action duration is BasedOnDateField",
+                  description: "If true, users specify start+end (a range). If false, single date/time only. Must be true if action duration is BasedOnDateField",
                   default: false,
                 },
               },
@@ -1643,33 +1645,31 @@ export const TOOLS: MCPTool[] = [
             },
             dateField: {
               type: "array",
+              description:
+                'Date/time values. Which properties to use depends on dateType: "Date" → startDate/endDate, "Time" → startTime/endTime, "DateAndTime" → all four. End values only if allowTimeRanges is true.',
               items: {
                 type: "object",
                 properties: {
                   fieldTypeId: { type: "number" },
                   startDate: {
                     type: "string",
-                    format: "timestamp",
                     description:
-                      'Example: "1756771200". Only the date will be taken from this timestamp.',
+                      'Date as UNIX timestamp string, e.g. "1756771200". Used when dateType is "Date" or "DateAndTime".',
                   },
                   endDate: {
                     type: "string",
-                    format: "timestamp",
                     description:
-                      'Example: "1756771200". Only the date will be taken from this timestamp',
+                      'End date as UNIX timestamp string. Only when allowTimeRanges is true.',
                   },
                   startTime: {
                     type: "string",
-                    format: "timestamp",
                     description:
-                      'Example: "1756771200". Only the time will be taken from this timestamp.',
+                      'Time as UNIX timestamp string, e.g. "1756771200". Used when dateType is "Time" or "DateAndTime".',
                   },
                   endTime: {
                     type: "string",
-                    format: "timestamp",
                     description:
-                      'Example: "1756771200". Only the time will be taken from this timestamp',
+                      'End time as UNIX timestamp string. Only when allowTimeRanges is true.',
                   },
                 },
               },
@@ -1777,33 +1777,31 @@ export const TOOLS: MCPTool[] = [
             },
             dateField: {
               type: "array",
+              description:
+                'Date/time values. Which properties to use depends on dateType: "Date" → startDate/endDate, "Time" → startTime/endTime, "DateAndTime" → all four. End values only if allowTimeRanges is true.',
               items: {
                 type: "object",
                 properties: {
                   fieldTypeId: { type: "number" },
                   startDate: {
                     type: "string",
-                    format: "timestamp",
                     description:
-                      'Example: "1756771200". Only the date will be taken from this timestamp.',
+                      'Date as UNIX timestamp string, e.g. "1756771200". Used when dateType is "Date" or "DateAndTime".',
                   },
                   endDate: {
                     type: "string",
-                    format: "timestamp",
                     description:
-                      'Example: "1756771200". Only the date will be taken from this timestamp',
+                      'End date as UNIX timestamp string. Only when allowTimeRanges is true.',
                   },
                   startTime: {
                     type: "string",
-                    format: "timestamp",
                     description:
-                      'Example: "1756771200". Only the time will be taken from this timestamp.',
+                      'Time as UNIX timestamp string, e.g. "1756771200". Used when dateType is "Time" or "DateAndTime".',
                   },
                   endTime: {
                     type: "string",
-                    format: "timestamp",
                     description:
-                      'Example: "1756771200". Only the time will be taken from this timestamp',
+                      'End time as UNIX timestamp string. Only when allowTimeRanges is true.',
                   },
                 },
               },
