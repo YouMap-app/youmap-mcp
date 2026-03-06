@@ -797,7 +797,7 @@ export const TOOLS: MCPTool[] = [
                     default: 500,
                   },
                 },
-                required: ["label", "order"],
+                required: ["label", "order", "placeholder"],
               },
             },
             mediaFields: {
@@ -848,7 +848,7 @@ export const TOOLS: MCPTool[] = [
                     default: false,
                   },
                 },
-                required: ["label", "order"],
+                required: ["label", "order", "placeholder"],
               },
             },
             ratingFields: {
@@ -882,6 +882,7 @@ export const TOOLS: MCPTool[] = [
               description:
                 "Value slider where people can choose a value from with a set range (min to max)",
               items: {
+                type: "object",
                 properties: {
                   label: { type: "string", description: "Field label" },
                   order: { type: "number", description: "Field order" },
@@ -897,21 +898,22 @@ export const TOOLS: MCPTool[] = [
                   },
                   min: {
                     type: "number",
-                    description: "Required field",
+                    description: "Minimum slider value",
                   },
                   max: {
                     type: "number",
-                    description: "Required field",
+                    description: "Maximum slider value",
                   },
                 },
+                required: ["label", "order", "min", "max"],
               },
-              required: ["label", "order"],
             },
             optionSliderFields: {
               type: "array",
               description:
                 "A field where people will be able to choose options from.",
               items: {
+                type: "object",
                 properties: {
                   label: { type: "string", description: "Field label" },
                   order: { type: "number", description: "Field order" },
@@ -927,7 +929,7 @@ export const TOOLS: MCPTool[] = [
                   },
                   options: {
                     type: "array",
-                    description: "Required field",
+                    description: "Slider option labels (2-4 items)",
                     items: {
                       type: "string",
                     },
@@ -936,8 +938,8 @@ export const TOOLS: MCPTool[] = [
                     uniqueItems: true,
                   },
                 },
+                required: ["label", "order", "options"],
               },
-              required: ["label", "order"],
             },
             dateField: {
               type: "object",
@@ -952,11 +954,21 @@ export const TOOLS: MCPTool[] = [
                 },
                 required: {
                   type: "boolean",
-                  description: "Required field",
+                  description: "Required field. Must be true if action duration is BasedOnDateField",
+                  default: false,
+                },
+                dateType: {
+                  type: "string",
+                  enum: ["Date", "Time", "DateAndTime"],
+                  description: "Type of date input",
+                },
+                allowTimeRanges: {
+                  type: "boolean",
+                  description: "Whether to allow start/end ranges. Must be true if action duration is BasedOnDateField",
                   default: false,
                 },
               },
-              required: ["label", "order"],
+              required: ["label", "order", "dateType", "allowTimeRanges"],
             },
             selectField: {
               type: "object",
@@ -1243,7 +1255,7 @@ export const TOOLS: MCPTool[] = [
                     default: 500,
                   },
                 },
-                required: ["label", "order"],
+                required: ["label", "order", "placeholder"],
               },
             },
             mediaFields: {
@@ -1294,7 +1306,7 @@ export const TOOLS: MCPTool[] = [
                     default: false,
                   },
                 },
-                required: ["label", "order"],
+                required: ["label", "order", "placeholder"],
               },
             },
             ratingFields: {
@@ -1328,6 +1340,7 @@ export const TOOLS: MCPTool[] = [
               description:
                 "Value slider where people can choose a value from with a set range (min to max)",
               items: {
+                type: "object",
                 properties: {
                   label: { type: "string", description: "Field label" },
                   order: { type: "number", description: "Field order" },
@@ -1343,21 +1356,22 @@ export const TOOLS: MCPTool[] = [
                   },
                   min: {
                     type: "number",
-                    description: "Required field",
+                    description: "Minimum slider value",
                   },
                   max: {
                     type: "number",
-                    description: "Required field",
+                    description: "Maximum slider value",
                   },
                 },
+                required: ["label", "order", "min", "max"],
               },
-              required: ["label", "order"],
             },
             optionSliderFields: {
               type: "array",
               description:
                 "A field where people will be able to choose options from.",
               items: {
+                type: "object",
                 properties: {
                   label: { type: "string", description: "Field label" },
                   order: { type: "number", description: "Field order" },
@@ -1373,7 +1387,7 @@ export const TOOLS: MCPTool[] = [
                   },
                   options: {
                     type: "array",
-                    description: "Required field",
+                    description: "Slider option labels (2-4 items)",
                     items: {
                       type: "string",
                     },
@@ -1382,8 +1396,8 @@ export const TOOLS: MCPTool[] = [
                     uniqueItems: true,
                   },
                 },
+                required: ["label", "order", "options"],
               },
-              required: ["label", "order"],
             },
             dateField: {
               type: "object",
@@ -1398,11 +1412,21 @@ export const TOOLS: MCPTool[] = [
                 },
                 required: {
                   type: "boolean",
-                  description: "Required field",
+                  description: "Required field. Must be true if action duration is BasedOnDateField",
+                  default: false,
+                },
+                dateType: {
+                  type: "string",
+                  enum: ["Date", "Time", "DateAndTime"],
+                  description: "Type of date input",
+                },
+                allowTimeRanges: {
+                  type: "boolean",
+                  description: "Whether to allow start/end ranges. Must be true if action duration is BasedOnDateField",
                   default: false,
                 },
               },
-              required: ["label", "order"],
+              required: ["label", "order", "dateType", "allowTimeRanges"],
             },
             selectField: {
               type: "object",
