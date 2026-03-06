@@ -72,7 +72,7 @@ export const TOOLS: MCPTool[] = [
           enum: ["public", "inviteOnly", "private"],
           description:
             "Access level: public (everyone can access), inviteOnly (invite specific users), private (only you)",
-          default: "private",
+          default: "public",
         },
         coverImageFromUrl: {
           type: "string",
@@ -295,11 +295,6 @@ export const TOOLS: MCPTool[] = [
           description:
             "Optional place ID from mapping services (Google Places, etc.)",
         },
-        saveAsTemplate: {
-          type: "boolean",
-          description: "Whether to save this post as a template for future use",
-          default: false,
-        },
         contentOrigin: {
           type: "string",
           enum: ["App", "PublicAPI"],
@@ -451,7 +446,6 @@ export const TOOLS: MCPTool[] = [
           actionId: args.actionId,
           address: args.address,
           placeId: args.placeId,
-          saveAsTemplate: args.saveAsTemplate || false,
           contentOrigin: args.contentOrigin || "PublicAPI",
           fields: args.fields,
         };
@@ -531,20 +525,6 @@ export const TOOLS: MCPTool[] = [
           enum: ["trending", "recent"],
           description: "How to order the results (default: recent)",
           default: "recent",
-        },
-        centerLatitude: {
-          type: "number",
-          description:
-            "Latitude for distance-based ordering (required if orderBy is 'distance')",
-          minimum: -90,
-          maximum: 90,
-        },
-        centerLongitude: {
-          type: "number",
-          description:
-            "Longitude for distance-based ordering (required if orderBy is 'distance')",
-          minimum: -180,
-          maximum: 180,
         },
         filterActionIds: {
           type: "array",
@@ -723,8 +703,8 @@ export const TOOLS: MCPTool[] = [
       properties: {
         name: {
           type: "string",
-          description: "Name of the action/post template (3-50 characters)",
-          minLength: 3,
+          description: "Name of the action/post template (1-50 characters)",
+          minLength: 1,
           maxLength: 50,
         },
         emoji: {
@@ -740,7 +720,7 @@ export const TOOLS: MCPTool[] = [
         borderColor: {
           type: "string",
           description:
-            "Hex color for the action border (7 characters, e.g., '#FF5733'). borderColor must be one of the following values: #8337EC, #E43AFF, #A86EFF, #87A2FB, #64DFDF, #FF006E, #FF63C1, #FF7D00, #FFAB00, #FFCB00, #C0E218, #00D880, #8DCCFC, #4EA6FD, #802AFF, #3E7C17, #29B23F, #1B939F, #342EAD, #8A9297, #4C5F68, #232932",
+            "Hex color for the action border (7 characters, e.g., '#FF5733'). borderColor must be one of the following values: #7530F6, #8337EC, #E43AFF, #A86EFF, #87A2FB, #64DFDF, #FF006E, #FF63C1, #FF7D00, #FFAB00, #FFCB00, #C0E218, #00D880, #8DCCFC, #4EA6FD, #802AFF, #3E7C17, #29B23F, #1B939F, #342EAD, #8A9297, #4C5F68, #232932",
           pattern: "^#[0-9A-Fa-f]{6}$",
         },
         duration: {
@@ -970,46 +950,51 @@ export const TOOLS: MCPTool[] = [
               },
               required: ["label", "order", "dateType", "allowTimeRanges"],
             },
-            selectField: {
-              type: "object",
-              description: "Values the user will be able to choose from",
-              properties: {
-                label: { type: "string", description: "Field label" },
-                order: { type: "number", description: "Field order" },
-                featured: {
-                  type: "boolean",
-                  description: "Show in featured view",
-                  default: false,
-                },
-                required: {
-                  type: "boolean",
-                  description: "Required field",
-                  default: false,
-                },
-                multiselect: {
-                  type: "boolean",
-                  description:
-                    "Defines if user will be able to choose multiple selections",
-                },
-                options: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      text: {
-                        type: "string",
-                        description: "Required field",
-                      },
-                      emoji: {
-                        type: "string",
-                        description:
-                          "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
+            selectFields: {
+              type: "array",
+              description: "Dropdown/select fields where users choose from options",
+              items: {
+                type: "object",
+                properties: {
+                  label: { type: "string", description: "Field label" },
+                  order: { type: "number", description: "Field order" },
+                  featured: {
+                    type: "boolean",
+                    description: "Show in featured view",
+                    default: false,
+                  },
+                  required: {
+                    type: "boolean",
+                    description: "Required field",
+                    default: false,
+                  },
+                  multiselect: {
+                    type: "boolean",
+                    description:
+                      "Defines if user will be able to choose multiple selections",
+                  },
+                  options: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        text: {
+                          type: "string",
+                          description: "Option text (1-25 characters)",
+                        },
+                        emoji: {
+                          type: "string",
+                          description:
+                            "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
+                        },
                       },
                     },
+                    minItems: 2,
+                    maxItems: 30,
                   },
                 },
+                required: ["label", "order", "multiselect", "options"],
               },
-              required: ["label", "order", "multiselect", "options"],
             },
           },
         },
@@ -1186,8 +1171,8 @@ export const TOOLS: MCPTool[] = [
         },
         name: {
           type: "string",
-          description: "New name of the action/post template (3-50 characters)",
-          minLength: 3,
+          description: "New name of the action/post template (1-50 characters)",
+          minLength: 1,
           maxLength: 50,
         },
         emoji: {
@@ -1428,46 +1413,51 @@ export const TOOLS: MCPTool[] = [
               },
               required: ["label", "order", "dateType", "allowTimeRanges"],
             },
-            selectField: {
-              type: "object",
-              description: "Values the user will be able to choose from",
-              properties: {
-                label: { type: "string", description: "Field label" },
-                order: { type: "number", description: "Field order" },
-                featured: {
-                  type: "boolean",
-                  description: "Show in featured view",
-                  default: false,
-                },
-                required: {
-                  type: "boolean",
-                  description: "Required field",
-                  default: false,
-                },
-                multiselect: {
-                  type: "boolean",
-                  description:
-                    "Defines if user will be able to choose multiple selections",
-                },
-                options: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      text: {
-                        type: "string",
-                        description: "Required field",
-                      },
-                      emoji: {
-                        type: "string",
-                        description:
-                          "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
+            selectFields: {
+              type: "array",
+              description: "Dropdown/select fields where users choose from options",
+              items: {
+                type: "object",
+                properties: {
+                  label: { type: "string", description: "Field label" },
+                  order: { type: "number", description: "Field order" },
+                  featured: {
+                    type: "boolean",
+                    description: "Show in featured view",
+                    default: false,
+                  },
+                  required: {
+                    type: "boolean",
+                    description: "Required field",
+                    default: false,
+                  },
+                  multiselect: {
+                    type: "boolean",
+                    description:
+                      "Defines if user will be able to choose multiple selections",
+                  },
+                  options: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        text: {
+                          type: "string",
+                          description: "Option text (1-25 characters)",
+                        },
+                        emoji: {
+                          type: "string",
+                          description:
+                            "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
+                        },
                       },
                     },
+                    minItems: 2,
+                    maxItems: 30,
                   },
                 },
+                required: ["label", "order", "multiselect", "options"],
               },
-              required: ["label", "order", "multiselect", "options"],
             },
           },
         },
@@ -1871,7 +1861,7 @@ export const TOOLS: MCPTool[] = [
           Object.entries(updateData).filter(([, value]) => value !== undefined),
         );
 
-        const response = await client.post(
+        const response = await client.patch(
           `/api/v2/post/${postId}`,
           cleanUpdateData,
         );
@@ -2743,7 +2733,7 @@ export const TOOLS: MCPTool[] = [
 
         // Make API request to update the map
         const response = await client.post(
-          `/api/v1/maps/${mapId}`,
+          `/api/v1/map/${mapId}`,
           cleanUpdateData,
         );
 
