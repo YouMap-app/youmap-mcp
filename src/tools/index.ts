@@ -266,7 +266,7 @@ export const TOOLS: MCPTool[] = [
         description: {
           type: "string",
           description:
-            "Description or content of the post (max 500 characters)",
+            "Short description of the post. MUST be 500 characters or fewer — will be truncated if longer. Keep it concise: 1-2 short sentences.",
           maxLength: 500,
         },
         latitude: {
@@ -368,7 +368,7 @@ export const TOOLS: MCPTool[] = [
             dateField: {
               type: "object",
               description:
-                'Date/time value for a date field. Which properties to use depends on the dateType set when the action was created: dateType "Date" → use startDate (and endDate if allowTimeRanges). dateType "Time" → use startTime (and endTime if allowTimeRanges). dateType "DateAndTime" → use startDate + startTime (and endDate + endTime if allowTimeRanges). All values are UNIX timestamp strings, e.g. "1756771200".',
+                'Date/time value. STRICT RULES per dateType — passing wrong fields causes validation errors. dateType "Date": pass startDate only (+ endDate if allowTimeRanges=true). startTime/endTime MUST be null. dateType "Time": pass startTime only (+ endTime if allowTimeRanges=true). startDate/endDate MUST be null. dateType "DateAndTime": pass startDate+startTime (+ endDate+endTime if allowTimeRanges=true). When allowTimeRanges=false, end values MUST be null. All values are UNIX timestamp strings e.g. "1756771200".',
               properties: {
                 fieldTypeId: { type: "number" },
                 startDate: {
@@ -438,7 +438,9 @@ export const TOOLS: MCPTool[] = [
         const postData = {
           mapId: args.mapId,
           name: args.name,
-          description: args.description,
+          description: args.description
+            ? args.description.slice(0, 500)
+            : undefined,
           lat: args.latitude,
           lon: args.longitude,
           actionId: args.actionId,
@@ -1547,7 +1549,7 @@ export const TOOLS: MCPTool[] = [
         description: {
           type: "string",
           description:
-            "New description or content of the post (max 500 characters)",
+            "New description of the post. MUST be 500 characters or fewer — will be truncated if longer. Keep it concise: 1-2 short sentences.",
           maxLength: 500,
         },
         latitude: {
@@ -1646,7 +1648,7 @@ export const TOOLS: MCPTool[] = [
             dateField: {
               type: "array",
               description:
-                'Date/time values. Which properties to use depends on dateType: "Date" → startDate/endDate, "Time" → startTime/endTime, "DateAndTime" → all four. End values only if allowTimeRanges is true.',
+                'Date/time values. STRICT RULES per dateType — passing wrong fields causes errors. "Date": startDate only (+ endDate if allowTimeRanges), startTime/endTime MUST be null. "Time": startTime only (+ endTime if allowTimeRanges), startDate/endDate MUST be null. "DateAndTime": startDate+startTime (+ endDate+endTime if allowTimeRanges). When allowTimeRanges=false, end values MUST be null. All values are UNIX timestamp strings.',
               items: {
                 type: "object",
                 properties: {
@@ -1778,7 +1780,7 @@ export const TOOLS: MCPTool[] = [
             dateField: {
               type: "array",
               description:
-                'Date/time values. Which properties to use depends on dateType: "Date" → startDate/endDate, "Time" → startTime/endTime, "DateAndTime" → all four. End values only if allowTimeRanges is true.',
+                'Date/time values. STRICT RULES per dateType — passing wrong fields causes errors. "Date": startDate only (+ endDate if allowTimeRanges), startTime/endTime MUST be null. "Time": startTime only (+ endTime if allowTimeRanges), startDate/endDate MUST be null. "DateAndTime": startDate+startTime (+ endDate+endTime if allowTimeRanges). When allowTimeRanges=false, end values MUST be null. All values are UNIX timestamp strings.',
               items: {
                 type: "object",
                 properties: {
@@ -1854,6 +1856,10 @@ export const TOOLS: MCPTool[] = [
     handler: async (args: any, client: YouMapClient) => {
       try {
         const { postId, ...updateData } = args;
+
+        if (updateData.description) {
+          updateData.description = updateData.description.slice(0, 500);
+        }
 
         const cleanUpdateData = Object.fromEntries(
           Object.entries(updateData).filter(([, value]) => value !== undefined),
@@ -2960,6 +2966,118 @@ export const TOOLS: MCPTool[] = [
         }
 
         throw new Error(`Network error: ${error.message}`);
+      }
+    },
+  },
+  {
+    name: "web_search",
+    description:
+      "Search the web using Google via SerpAPI. Returns titles, snippets, and URLs. Use this to find current information, news, facts, or any web content.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Search query",
+          minLength: 1,
+          maxLength: 500,
+        },
+        num_results: {
+          type: "number",
+          description:
+            "Number of results to return (default: 5, max: 10)",
+          default: 5,
+          minimum: 1,
+          maximum: 10,
+        },
+      },
+      required: ["query"],
+    },
+    handler: async (args: any, client: YouMapClient) => {
+      const { query, num_results = 5 } = args;
+
+      const serpApiKey = client.serpApiKey;
+      if (!serpApiKey) {
+        throw new Error(
+          "SERP_API_KEY is not configured. Please provide the SERP API key in the MCP server URL query parameters: ?serpApiKey=your_key_here",
+        );
+      }
+
+      try {
+        const params = new URLSearchParams({
+          q: query,
+          engine: "google",
+          api_key: serpApiKey,
+          num: String(Math.min(num_results, 10)),
+        });
+
+        const response = await fetch(
+          `https://serpapi.com/search.json?${params.toString()}`,
+          { signal: AbortSignal.timeout(15000) },
+        );
+
+        if (!response.ok) {
+          const status = response.status;
+          const message =
+            (await response.text().catch(() => "")) || response.statusText;
+          switch (status) {
+            case 401:
+            case 403:
+              throw new Error(
+                "SERP API authentication failed. Please check your SERP_API_KEY.",
+              );
+            case 429:
+              throw new Error(
+                "SERP API rate limit exceeded. Please try again later.",
+              );
+            default:
+              throw new Error(`SERP API error (${status}): ${message}`);
+          }
+        }
+
+        const data = await response.json();
+
+        const results: Array<{
+          position: number;
+          title: string;
+          link: string;
+          snippet: string;
+        }> = [];
+
+        if (data.organic_results) {
+          for (const result of data.organic_results) {
+            results.push({
+              position: result.position,
+              title: result.title || "",
+              link: result.link || "",
+              snippet: result.snippet || "",
+            });
+          }
+        }
+
+        const output: any = { results };
+
+        if (data.answer_box) {
+          output.answer_box = {
+            title: data.answer_box.title || undefined,
+            answer: data.answer_box.answer || data.answer_box.snippet || undefined,
+            link: data.answer_box.link || undefined,
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(output, null, 2),
+            },
+          ],
+        };
+      } catch (error: any) {
+        if (error.message?.includes("SERP API")) {
+          throw error;
+        }
+        throw new Error(`Web search failed: ${error.message}`);
       }
     },
   },

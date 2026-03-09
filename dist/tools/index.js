@@ -50,7 +50,7 @@ export const TOOLS = [
                     type: "string",
                     enum: ["public", "inviteOnly", "private"],
                     description: "Access level: public (everyone can access), inviteOnly (invite specific users), private (only you)",
-                    default: "private",
+                    default: "public",
                 },
                 coverImageFromUrl: {
                     type: "string",
@@ -232,7 +232,7 @@ export const TOOLS = [
                 },
                 description: {
                     type: "string",
-                    description: "Description or content of the post (max 500 characters)",
+                    description: "Short description of the post. MUST be 500 characters or fewer — will be truncated if longer. Keep it concise: 1-2 short sentences.",
                     maxLength: 500,
                 },
                 latitude: {
@@ -258,11 +258,6 @@ export const TOOLS = [
                 placeId: {
                     type: "string",
                     description: "Optional place ID from mapping services (Google Places, etc.)",
-                },
-                saveAsTemplate: {
-                    type: "boolean",
-                    description: "Whether to save this post as a template for future use",
-                    default: false,
                 },
                 contentOrigin: {
                     type: "string",
@@ -334,27 +329,24 @@ export const TOOLS = [
                         },
                         dateField: {
                             type: "object",
+                            description: 'Date/time value. STRICT RULES per dateType — passing wrong fields causes validation errors. dateType "Date": pass startDate only (+ endDate if allowTimeRanges=true). startTime/endTime MUST be null. dateType "Time": pass startTime only (+ endTime if allowTimeRanges=true). startDate/endDate MUST be null. dateType "DateAndTime": pass startDate+startTime (+ endDate+endTime if allowTimeRanges=true). When allowTimeRanges=false, end values MUST be null. All values are UNIX timestamp strings e.g. "1756771200".',
                             properties: {
                                 fieldTypeId: { type: "number" },
                                 startDate: {
                                     type: "string",
-                                    format: "timestamp",
-                                    description: 'Example: "1756771200". Only the date will be taken from this timestamp.',
+                                    description: 'Date as UNIX timestamp string, e.g. "1756771200". Used when dateType is "Date" or "DateAndTime". Only the date portion is extracted.',
                                 },
                                 endDate: {
                                     type: "string",
-                                    format: "timestamp",
-                                    description: 'Example: "1756771200". Only the date will be taken from this timestamp',
+                                    description: 'End date as UNIX timestamp string. Only used when allowTimeRanges is true. Only the date portion is extracted.',
                                 },
                                 startTime: {
                                     type: "string",
-                                    format: "timestamp",
-                                    description: 'Example: "1756771200". Only the time will be taken from this timestamp.',
+                                    description: 'Time as UNIX timestamp string, e.g. "1756771200". Used when dateType is "Time" or "DateAndTime". Only the time portion is extracted.',
                                 },
                                 endTime: {
                                     type: "string",
-                                    format: "timestamp",
-                                    description: 'Example: "1756771200". Only the time will be taken from this timestamp',
+                                    description: 'End time as UNIX timestamp string. Only used when allowTimeRanges is true. Only the time portion is extracted.',
                                 },
                             },
                         },
@@ -403,13 +395,14 @@ export const TOOLS = [
                 const postData = {
                     mapId: args.mapId,
                     name: args.name,
-                    description: args.description,
+                    description: args.description
+                        ? args.description.slice(0, 500)
+                        : undefined,
                     lat: args.latitude,
                     lon: args.longitude,
                     actionId: args.actionId,
                     address: args.address,
                     placeId: args.placeId,
-                    saveAsTemplate: args.saveAsTemplate || false,
                     contentOrigin: args.contentOrigin || "PublicAPI",
                     fields: args.fields,
                 };
@@ -485,18 +478,6 @@ export const TOOLS = [
                     enum: ["trending", "recent"],
                     description: "How to order the results (default: recent)",
                     default: "recent",
-                },
-                centerLatitude: {
-                    type: "number",
-                    description: "Latitude for distance-based ordering (required if orderBy is 'distance')",
-                    minimum: -90,
-                    maximum: 90,
-                },
-                centerLongitude: {
-                    type: "number",
-                    description: "Longitude for distance-based ordering (required if orderBy is 'distance')",
-                    minimum: -180,
-                    maximum: 180,
                 },
                 filterActionIds: {
                     type: "array",
@@ -664,8 +645,8 @@ export const TOOLS = [
             properties: {
                 name: {
                     type: "string",
-                    description: "Name of the action/post template (3-50 characters)",
-                    minLength: 3,
+                    description: "Name of the action/post template (1-50 characters)",
+                    minLength: 1,
                     maxLength: 50,
                 },
                 emoji: {
@@ -679,7 +660,7 @@ export const TOOLS = [
                 },
                 borderColor: {
                     type: "string",
-                    description: "Hex color for the action border (7 characters, e.g., '#FF5733'). borderColor must be one of the following values: #8337EC, #E43AFF, #A86EFF, #87A2FB, #64DFDF, #FF006E, #FF63C1, #FF7D00, #FFAB00, #FFCB00, #C0E218, #00D880, #8DCCFC, #4EA6FD, #802AFF, #3E7C17, #29B23F, #1B939F, #342EAD, #8A9297, #4C5F68, #232932",
+                    description: "Hex color for the action border (7 characters, e.g., '#FF5733'). borderColor must be one of the following values: #7530F6, #8337EC, #E43AFF, #A86EFF, #87A2FB, #64DFDF, #FF006E, #FF63C1, #FF7D00, #FFAB00, #FFCB00, #C0E218, #00D880, #8DCCFC, #4EA6FD, #802AFF, #3E7C17, #29B23F, #1B939F, #342EAD, #8A9297, #4C5F68, #232932",
                     pattern: "^#[0-9A-Fa-f]{6}$",
                 },
                 duration: {
@@ -734,7 +715,7 @@ export const TOOLS = [
                                         default: 500,
                                     },
                                 },
-                                required: ["label", "order"],
+                                required: ["label", "order", "placeholder"],
                             },
                         },
                         mediaFields: {
@@ -785,7 +766,7 @@ export const TOOLS = [
                                         default: false,
                                     },
                                 },
-                                required: ["label", "order"],
+                                required: ["label", "order", "placeholder"],
                             },
                         },
                         ratingFields: {
@@ -818,6 +799,7 @@ export const TOOLS = [
                             type: "array",
                             description: "Value slider where people can choose a value from with a set range (min to max)",
                             items: {
+                                type: "object",
                                 properties: {
                                     label: { type: "string", description: "Field label" },
                                     order: { type: "number", description: "Field order" },
@@ -833,20 +815,21 @@ export const TOOLS = [
                                     },
                                     min: {
                                         type: "number",
-                                        description: "Required field",
+                                        description: "Minimum slider value",
                                     },
                                     max: {
                                         type: "number",
-                                        description: "Required field",
+                                        description: "Maximum slider value",
                                     },
                                 },
+                                required: ["label", "order", "min", "max"],
                             },
-                            required: ["label", "order"],
                         },
                         optionSliderFields: {
                             type: "array",
                             description: "A field where people will be able to choose options from.",
                             items: {
+                                type: "object",
                                 properties: {
                                     label: { type: "string", description: "Field label" },
                                     order: { type: "number", description: "Field order" },
@@ -862,7 +845,7 @@ export const TOOLS = [
                                     },
                                     options: {
                                         type: "array",
-                                        description: "Required field",
+                                        description: "Slider option labels (2-4 items)",
                                         items: {
                                             type: "string",
                                         },
@@ -871,12 +854,12 @@ export const TOOLS = [
                                         uniqueItems: true,
                                     },
                                 },
+                                required: ["label", "order", "options"],
                             },
-                            required: ["label", "order"],
                         },
                         dateField: {
                             type: "object",
-                            description: "Single date field for the action",
+                            description: 'Single date/time field. dateType controls what users fill in: "Date" = date only (startDate/endDate), "Time" = time only (startTime/endTime), "DateAndTime" = both date and time fields. allowTimeRanges enables start+end (range) instead of just a single value. If action duration is BasedOnDateField, both required and allowTimeRanges must be true.',
                             properties: {
                                 label: { type: "string", description: "Field label" },
                                 order: { type: "number", description: "Field order" },
@@ -887,50 +870,65 @@ export const TOOLS = [
                                 },
                                 required: {
                                     type: "boolean",
-                                    description: "Required field",
+                                    description: "Required field. Must be true if action duration is BasedOnDateField",
+                                    default: false,
+                                },
+                                dateType: {
+                                    type: "string",
+                                    enum: ["Date", "Time", "DateAndTime"],
+                                    description: '"Date" = date picker only, "Time" = time picker only, "DateAndTime" = both date and time pickers',
+                                },
+                                allowTimeRanges: {
+                                    type: "boolean",
+                                    description: "If true, users specify start+end (a range). If false, single date/time only. Must be true if action duration is BasedOnDateField",
                                     default: false,
                                 },
                             },
-                            required: ["label", "order"],
+                            required: ["label", "order", "dateType", "allowTimeRanges"],
                         },
-                        selectField: {
-                            type: "object",
-                            description: "Values the user will be able to choose from",
-                            properties: {
-                                label: { type: "string", description: "Field label" },
-                                order: { type: "number", description: "Field order" },
-                                featured: {
-                                    type: "boolean",
-                                    description: "Show in featured view",
-                                    default: false,
-                                },
-                                required: {
-                                    type: "boolean",
-                                    description: "Required field",
-                                    default: false,
-                                },
-                                multiselect: {
-                                    type: "boolean",
-                                    description: "Defines if user will be able to choose multiple selections",
-                                },
-                                options: {
-                                    type: "array",
-                                    items: {
-                                        type: "object",
-                                        properties: {
-                                            text: {
-                                                type: "string",
-                                                description: "Required field",
-                                            },
-                                            emoji: {
-                                                type: "string",
-                                                description: "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
+                        selectFields: {
+                            type: "array",
+                            description: "Dropdown/select fields where users choose from options",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    label: { type: "string", description: "Field label" },
+                                    order: { type: "number", description: "Field order" },
+                                    featured: {
+                                        type: "boolean",
+                                        description: "Show in featured view",
+                                        default: false,
+                                    },
+                                    required: {
+                                        type: "boolean",
+                                        description: "Required field",
+                                        default: false,
+                                    },
+                                    multiselect: {
+                                        type: "boolean",
+                                        description: "Defines if user will be able to choose multiple selections",
+                                    },
+                                    options: {
+                                        type: "array",
+                                        items: {
+                                            type: "object",
+                                            properties: {
+                                                text: {
+                                                    type: "string",
+                                                    description: "Option text (1-25 characters)",
+                                                },
+                                                emoji: {
+                                                    type: "string",
+                                                    description: "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
+                                                },
                                             },
                                         },
+                                        minItems: 2,
+                                        maxItems: 30,
                                     },
                                 },
+                                required: ["label", "order", "multiselect", "options"],
                             },
-                            required: ["label", "order", "multiselect", "options"],
                         },
                     },
                 },
@@ -1092,8 +1090,8 @@ export const TOOLS = [
                 },
                 name: {
                     type: "string",
-                    description: "New name of the action/post template (3-50 characters)",
-                    minLength: 3,
+                    description: "New name of the action/post template (1-50 characters)",
+                    minLength: 1,
                     maxLength: 50,
                 },
                 emoji: {
@@ -1157,7 +1155,7 @@ export const TOOLS = [
                                         default: 500,
                                     },
                                 },
-                                required: ["label", "order"],
+                                required: ["label", "order", "placeholder"],
                             },
                         },
                         mediaFields: {
@@ -1208,7 +1206,7 @@ export const TOOLS = [
                                         default: false,
                                     },
                                 },
-                                required: ["label", "order"],
+                                required: ["label", "order", "placeholder"],
                             },
                         },
                         ratingFields: {
@@ -1241,6 +1239,7 @@ export const TOOLS = [
                             type: "array",
                             description: "Value slider where people can choose a value from with a set range (min to max)",
                             items: {
+                                type: "object",
                                 properties: {
                                     label: { type: "string", description: "Field label" },
                                     order: { type: "number", description: "Field order" },
@@ -1256,20 +1255,21 @@ export const TOOLS = [
                                     },
                                     min: {
                                         type: "number",
-                                        description: "Required field",
+                                        description: "Minimum slider value",
                                     },
                                     max: {
                                         type: "number",
-                                        description: "Required field",
+                                        description: "Maximum slider value",
                                     },
                                 },
+                                required: ["label", "order", "min", "max"],
                             },
-                            required: ["label", "order"],
                         },
                         optionSliderFields: {
                             type: "array",
                             description: "A field where people will be able to choose options from.",
                             items: {
+                                type: "object",
                                 properties: {
                                     label: { type: "string", description: "Field label" },
                                     order: { type: "number", description: "Field order" },
@@ -1285,7 +1285,7 @@ export const TOOLS = [
                                     },
                                     options: {
                                         type: "array",
-                                        description: "Required field",
+                                        description: "Slider option labels (2-4 items)",
                                         items: {
                                             type: "string",
                                         },
@@ -1294,12 +1294,12 @@ export const TOOLS = [
                                         uniqueItems: true,
                                     },
                                 },
+                                required: ["label", "order", "options"],
                             },
-                            required: ["label", "order"],
                         },
                         dateField: {
                             type: "object",
-                            description: "Single date field for the action",
+                            description: 'Single date/time field. dateType controls what users fill in: "Date" = date only (startDate/endDate), "Time" = time only (startTime/endTime), "DateAndTime" = both date and time fields. allowTimeRanges enables start+end (range) instead of just a single value. If action duration is BasedOnDateField, both required and allowTimeRanges must be true.',
                             properties: {
                                 label: { type: "string", description: "Field label" },
                                 order: { type: "number", description: "Field order" },
@@ -1310,50 +1310,65 @@ export const TOOLS = [
                                 },
                                 required: {
                                     type: "boolean",
-                                    description: "Required field",
+                                    description: "Required field. Must be true if action duration is BasedOnDateField",
+                                    default: false,
+                                },
+                                dateType: {
+                                    type: "string",
+                                    enum: ["Date", "Time", "DateAndTime"],
+                                    description: '"Date" = date picker only, "Time" = time picker only, "DateAndTime" = both date and time pickers',
+                                },
+                                allowTimeRanges: {
+                                    type: "boolean",
+                                    description: "If true, users specify start+end (a range). If false, single date/time only. Must be true if action duration is BasedOnDateField",
                                     default: false,
                                 },
                             },
-                            required: ["label", "order"],
+                            required: ["label", "order", "dateType", "allowTimeRanges"],
                         },
-                        selectField: {
-                            type: "object",
-                            description: "Values the user will be able to choose from",
-                            properties: {
-                                label: { type: "string", description: "Field label" },
-                                order: { type: "number", description: "Field order" },
-                                featured: {
-                                    type: "boolean",
-                                    description: "Show in featured view",
-                                    default: false,
-                                },
-                                required: {
-                                    type: "boolean",
-                                    description: "Required field",
-                                    default: false,
-                                },
-                                multiselect: {
-                                    type: "boolean",
-                                    description: "Defines if user will be able to choose multiple selections",
-                                },
-                                options: {
-                                    type: "array",
-                                    items: {
-                                        type: "object",
-                                        properties: {
-                                            text: {
-                                                type: "string",
-                                                description: "Required field",
-                                            },
-                                            emoji: {
-                                                type: "string",
-                                                description: "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
+                        selectFields: {
+                            type: "array",
+                            description: "Dropdown/select fields where users choose from options",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    label: { type: "string", description: "Field label" },
+                                    order: { type: "number", description: "Field order" },
+                                    featured: {
+                                        type: "boolean",
+                                        description: "Show in featured view",
+                                        default: false,
+                                    },
+                                    required: {
+                                        type: "boolean",
+                                        description: "Required field",
+                                        default: false,
+                                    },
+                                    multiselect: {
+                                        type: "boolean",
+                                        description: "Defines if user will be able to choose multiple selections",
+                                    },
+                                    options: {
+                                        type: "array",
+                                        items: {
+                                            type: "object",
+                                            properties: {
+                                                text: {
+                                                    type: "string",
+                                                    description: "Option text (1-25 characters)",
+                                                },
+                                                emoji: {
+                                                    type: "string",
+                                                    description: "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
+                                                },
                                             },
                                         },
+                                        minItems: 2,
+                                        maxItems: 30,
                                     },
                                 },
+                                required: ["label", "order", "multiselect", "options"],
                             },
-                            required: ["label", "order", "multiselect", "options"],
                         },
                     },
                 },
@@ -1436,7 +1451,7 @@ export const TOOLS = [
                 },
                 description: {
                     type: "string",
-                    description: "New description or content of the post (max 500 characters)",
+                    description: "New description of the post. MUST be 500 characters or fewer — will be truncated if longer. Keep it concise: 1-2 short sentences.",
                     maxLength: 500,
                 },
                 latitude: {
@@ -1532,29 +1547,26 @@ export const TOOLS = [
                         },
                         dateField: {
                             type: "array",
+                            description: 'Date/time values. STRICT RULES per dateType — passing wrong fields causes errors. "Date": startDate only (+ endDate if allowTimeRanges), startTime/endTime MUST be null. "Time": startTime only (+ endTime if allowTimeRanges), startDate/endDate MUST be null. "DateAndTime": startDate+startTime (+ endDate+endTime if allowTimeRanges). When allowTimeRanges=false, end values MUST be null. All values are UNIX timestamp strings.',
                             items: {
                                 type: "object",
                                 properties: {
                                     fieldTypeId: { type: "number" },
                                     startDate: {
                                         type: "string",
-                                        format: "timestamp",
-                                        description: 'Example: "1756771200". Only the date will be taken from this timestamp.',
+                                        description: 'Date as UNIX timestamp string, e.g. "1756771200". Used when dateType is "Date" or "DateAndTime".',
                                     },
                                     endDate: {
                                         type: "string",
-                                        format: "timestamp",
-                                        description: 'Example: "1756771200". Only the date will be taken from this timestamp',
+                                        description: 'End date as UNIX timestamp string. Only when allowTimeRanges is true.',
                                     },
                                     startTime: {
                                         type: "string",
-                                        format: "timestamp",
-                                        description: 'Example: "1756771200". Only the time will be taken from this timestamp.',
+                                        description: 'Time as UNIX timestamp string, e.g. "1756771200". Used when dateType is "Time" or "DateAndTime".',
                                     },
                                     endTime: {
                                         type: "string",
-                                        format: "timestamp",
-                                        description: 'Example: "1756771200". Only the time will be taken from this timestamp',
+                                        description: 'End time as UNIX timestamp string. Only when allowTimeRanges is true.',
                                     },
                                 },
                             },
@@ -1660,29 +1672,26 @@ export const TOOLS = [
                         },
                         dateField: {
                             type: "array",
+                            description: 'Date/time values. STRICT RULES per dateType — passing wrong fields causes errors. "Date": startDate only (+ endDate if allowTimeRanges), startTime/endTime MUST be null. "Time": startTime only (+ endTime if allowTimeRanges), startDate/endDate MUST be null. "DateAndTime": startDate+startTime (+ endDate+endTime if allowTimeRanges). When allowTimeRanges=false, end values MUST be null. All values are UNIX timestamp strings.',
                             items: {
                                 type: "object",
                                 properties: {
                                     fieldTypeId: { type: "number" },
                                     startDate: {
                                         type: "string",
-                                        format: "timestamp",
-                                        description: 'Example: "1756771200". Only the date will be taken from this timestamp.',
+                                        description: 'Date as UNIX timestamp string, e.g. "1756771200". Used when dateType is "Date" or "DateAndTime".',
                                     },
                                     endDate: {
                                         type: "string",
-                                        format: "timestamp",
-                                        description: 'Example: "1756771200". Only the date will be taken from this timestamp',
+                                        description: 'End date as UNIX timestamp string. Only when allowTimeRanges is true.',
                                     },
                                     startTime: {
                                         type: "string",
-                                        format: "timestamp",
-                                        description: 'Example: "1756771200". Only the time will be taken from this timestamp.',
+                                        description: 'Time as UNIX timestamp string, e.g. "1756771200". Used when dateType is "Time" or "DateAndTime".',
                                     },
                                     endTime: {
                                         type: "string",
-                                        format: "timestamp",
-                                        description: 'Example: "1756771200". Only the time will be taken from this timestamp',
+                                        description: 'End time as UNIX timestamp string. Only when allowTimeRanges is true.',
                                     },
                                 },
                             },
@@ -1735,8 +1744,11 @@ export const TOOLS = [
         handler: async (args, client) => {
             try {
                 const { postId, ...updateData } = args;
+                if (updateData.description) {
+                    updateData.description = updateData.description.slice(0, 500);
+                }
                 const cleanUpdateData = Object.fromEntries(Object.entries(updateData).filter(([, value]) => value !== undefined));
-                const response = await client.post(`/api/v2/post/${postId}`, cleanUpdateData);
+                const response = await client.patch(`/api/v2/post/${postId}`, cleanUpdateData);
                 return {
                     success: true,
                     data: response.data,
@@ -2458,7 +2470,7 @@ export const TOOLS = [
                     throw new Error("At least one field must be provided for update");
                 }
                 // Make API request to update the map
-                const response = await client.post(`/api/v1/maps/${mapId}`, cleanUpdateData);
+                const response = await client.post(`/api/v1/map/${mapId}`, cleanUpdateData);
                 return {
                     success: true,
                     message: `Map with ID ${mapId} has been updated successfully`,
@@ -2581,6 +2593,151 @@ export const TOOLS = [
                     }
                 }
                 throw new Error(`Network error: ${error.message}`);
+            }
+        },
+    },
+    {
+        name: "check_map_name_availability",
+        description: "Check if a map name is available for use. Map names must be unique in YouMap, so this tool helps verify if a desired name can be used before creating a map.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                name: {
+                    type: "string",
+                    description: "Map name to check for availability (e.g., 'Best Coffee Shops', 'Hiking Trails 2024')",
+                    minLength: 3,
+                    maxLength: 50,
+                },
+            },
+            required: ["name"],
+        },
+        handler: async (args, client) => {
+            try {
+                if (!args.name || typeof args.name !== "string") {
+                    throw new Error("Map name is required and must be a string");
+                }
+                if (args.name.length < 3 || args.name.length > 50) {
+                    throw new Error("Map name must be between 3 and 50 characters");
+                }
+                const encodedName = encodeURIComponent(args.name);
+                const result = await client.get(`/api/v1/map/name-availability/${encodedName}`);
+                const isAvailable = result?.success === true;
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: JSON.stringify({
+                                name: args.name,
+                                available: isAvailable,
+                                message: isAvailable
+                                    ? `The map name "${args.name}" is available and can be used.`
+                                    : `The map name "${args.name}" is already taken. Please choose a different name.`,
+                            }, null, 2),
+                        },
+                    ],
+                };
+            }
+            catch (error) {
+                console.error("Error checking map name availability:", error);
+                if (error.response) {
+                    const status = error.response.status;
+                    const message = error.response.data?.message || error.message;
+                    switch (status) {
+                        case 400:
+                            throw new Error(`Invalid map name: ${message || "Name does not meet requirements"}`);
+                        case 401:
+                            throw new Error("Authentication required. Please check your access token.");
+                        default:
+                            throw new Error(`Server error (${status}): ${message}`);
+                    }
+                }
+                throw new Error(`Network error: ${error.message}`);
+            }
+        },
+    },
+    {
+        name: "web_search",
+        description: "Search the web using Google via SerpAPI. Returns titles, snippets, and URLs. Use this to find current information, news, facts, or any web content.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                query: {
+                    type: "string",
+                    description: "Search query",
+                    minLength: 1,
+                    maxLength: 500,
+                },
+                num_results: {
+                    type: "number",
+                    description: "Number of results to return (default: 5, max: 10)",
+                    default: 5,
+                    minimum: 1,
+                    maximum: 10,
+                },
+            },
+            required: ["query"],
+        },
+        handler: async (args, client) => {
+            const { query, num_results = 5 } = args;
+            const serpApiKey = client.serpApiKey;
+            if (!serpApiKey) {
+                throw new Error("SERP_API_KEY is not configured. Please provide the SERP API key in the MCP server URL query parameters: ?serpApiKey=your_key_here");
+            }
+            try {
+                const params = new URLSearchParams({
+                    q: query,
+                    engine: "google",
+                    api_key: serpApiKey,
+                    num: String(Math.min(num_results, 10)),
+                });
+                const response = await fetch(`https://serpapi.com/search.json?${params.toString()}`, { signal: AbortSignal.timeout(15000) });
+                if (!response.ok) {
+                    const status = response.status;
+                    const message = (await response.text().catch(() => "")) || response.statusText;
+                    switch (status) {
+                        case 401:
+                        case 403:
+                            throw new Error("SERP API authentication failed. Please check your SERP_API_KEY.");
+                        case 429:
+                            throw new Error("SERP API rate limit exceeded. Please try again later.");
+                        default:
+                            throw new Error(`SERP API error (${status}): ${message}`);
+                    }
+                }
+                const data = await response.json();
+                const results = [];
+                if (data.organic_results) {
+                    for (const result of data.organic_results) {
+                        results.push({
+                            position: result.position,
+                            title: result.title || "",
+                            link: result.link || "",
+                            snippet: result.snippet || "",
+                        });
+                    }
+                }
+                const output = { results };
+                if (data.answer_box) {
+                    output.answer_box = {
+                        title: data.answer_box.title || undefined,
+                        answer: data.answer_box.answer || data.answer_box.snippet || undefined,
+                        link: data.answer_box.link || undefined,
+                    };
+                }
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: JSON.stringify(output, null, 2),
+                        },
+                    ],
+                };
+            }
+            catch (error) {
+                if (error.message?.includes("SERP API")) {
+                    throw error;
+                }
+                throw new Error(`Web search failed: ${error.message}`);
             }
         },
     },
