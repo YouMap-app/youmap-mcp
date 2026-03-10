@@ -441,14 +441,18 @@ export const TOOLS: MCPTool[] = [
           description: args.description
             ? args.description.slice(0, 500)
             : undefined,
-          lat: args.latitude,
-          lon: args.longitude,
+          lat: Number(args.latitude),
+          lon: Number(args.longitude),
           actionId: args.actionId,
           address: args.address,
           placeId: args.placeId,
           contentOrigin: args.contentOrigin || "PublicAPI",
           fields: args.fields,
         };
+
+        if (isNaN(postData.lat) || isNaN(postData.lon)) {
+          throw new Error("latitude and longitude must be valid numbers");
+        }
 
         const result = await client.post("/api/v1/post", postData);
 
@@ -827,6 +831,12 @@ export const TOOLS: MCPTool[] = [
                     description: "Required field",
                     default: false,
                   },
+                  linkType: {
+                    type: "string",
+                    enum: ["Default", "YouTube"],
+                    description:
+                      "Type of website link. Use 'YouTube' for YouTube video URLs. Defaults to 'Default'.",
+                  },
                 },
                 required: ["label", "order", "placeholder"],
               },
@@ -975,6 +985,12 @@ export const TOOLS: MCPTool[] = [
                     description:
                       "Defines if user will be able to choose multiple selections",
                   },
+                  withEmoji: {
+                    type: "boolean",
+                    description:
+                      "Set to true if options include emojis. IMPORTANT: if true, ALL options MUST have an emoji. If false (default), NO option should have an emoji. Mismatch causes errors.",
+                    default: false,
+                  },
                   options: {
                     type: "array",
                     items: {
@@ -987,7 +1003,7 @@ export const TOOLS: MCPTool[] = [
                         emoji: {
                           type: "string",
                           description:
-                            "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
+                            "Emoji for this option (only if withEmoji is true). Use get_emoji_shortnames to find codes. Pass in shortcode format, e.g :smile:",
                         },
                       },
                     },
@@ -1292,6 +1308,12 @@ export const TOOLS: MCPTool[] = [
                     description: "Required field",
                     default: false,
                   },
+                  linkType: {
+                    type: "string",
+                    enum: ["Default", "YouTube"],
+                    description:
+                      "Type of website link. Use 'YouTube' for YouTube video URLs. Defaults to 'Default'.",
+                  },
                 },
                 required: ["label", "order", "placeholder"],
               },
@@ -1440,6 +1462,12 @@ export const TOOLS: MCPTool[] = [
                     description:
                       "Defines if user will be able to choose multiple selections",
                   },
+                  withEmoji: {
+                    type: "boolean",
+                    description:
+                      "Set to true if options include emojis. IMPORTANT: if true, ALL options MUST have an emoji. If false (default), NO option should have an emoji. Mismatch causes errors.",
+                    default: false,
+                  },
                   options: {
                     type: "array",
                     items: {
@@ -1452,7 +1480,7 @@ export const TOOLS: MCPTool[] = [
                         emoji: {
                           type: "string",
                           description:
-                            "Emoji for this option. Use the get_emoji_shortnames tool to find available emoji codes. Pass in shortcode format, e.g :smile:",
+                            "Emoji for this option (only if withEmoji is true). Use get_emoji_shortnames to find codes. Pass in shortcode format, e.g :smile:",
                         },
                       },
                     },
